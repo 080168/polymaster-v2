@@ -1,0 +1,2440 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PolyMaster">
+<meta name="theme-color" content="#060b12">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>PolyMaster v3.1</title>
+<script>
+const mf={name:"PolyMaster — All-in-One",short_name:"PolyMaster",start_url:".",display:"standalone",background_color:"#060b12",theme_color:"#00e5ff",orientation:"portrait",icons:[{src:"data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="80" fill="#060b12"/><text x="256" y="290" font-size="180" text-anchor="middle" fill="#00e5ff" font-family="monospace">⬡</text><text x="256" y="420" font-size="65" text-anchor="middle" fill="#00ff88" font-family="monospace" font-weight="bold">PM</text></svg>'),sizes:"512x512",type:"image/svg+xml",purpose:"any maskable"}]};
+const bl=new Blob([JSON.stringify(mf)],{type:"application/json"});
+const lk=document.createElement("link");lk.rel="manifest";lk.href=URL.createObjectURL(bl);document.head.appendChild(lk);
+</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap');
+:root{
+  --bg:#060b12;--panel:#0b1219;--p2:#10181f;--bd:#172030;
+  --ac:#00e5ff;--gr:#00ff88;--yw:#ffd60a;--rd:#ff3d5a;--pu:#b388ff;
+  --mu:#2a4055;--tx:#7090a8;--br:#dde8f0;--fn:'JetBrains Mono','Courier New',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{font-family:var(--fn);background:var(--bg);color:var(--tx);min-height:100vh;overscroll-behavior:none}
+#app{max-width:480px;margin:0 auto;padding:0 0 60px}
+
+/* ── BOTTOM NAV ── */
+#nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--panel);border-top:1px solid var(--bd);display:flex;z-index:200}
+.nav-btn{flex:1;padding:10px 4px 8px;background:none;border:none;color:var(--mu);font-family:var(--fn);font-size:8px;letter-spacing:1px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+.nav-btn .ni{font-size:18px;line-height:1}
+.nav-btn.on{color:var(--ac)}.nav-btn.on .ni{filter:drop-shadow(0 0 4px var(--ac))}
+
+/* ── HEADER ── */
+#hdr{background:var(--panel);border-bottom:1px solid var(--bd);padding:10px 12px;position:sticky;top:0;z-index:100}
+.hdr-row{display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:16px;font-weight:700;color:var(--br);letter-spacing:2px}
+.logo .g{color:var(--ac)}
+.hdr-stats{font-size:9px;color:var(--mu);text-align:right}
+.hdr-stats b{color:var(--br)}
+
+/* ── TABS CONTENT ── */
+.tc{display:none;padding:12px}
+.tc.on{display:block}
+
+/* ── SECTION ── */
+.sec{background:var(--panel);border:1px solid var(--bd);border-radius:7px;padding:12px;margin-bottom:10px}
+.stitle{font-size:9px;letter-spacing:3px;color:var(--mu);text-transform:uppercase;margin-bottom:9px}
+
+/* ── KV ── */
+.kv{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--bd);font-size:10px}
+.kv .k{color:var(--mu);letter-spacing:1px}.kv .v{color:var(--tx)}
+
+/* ── TAG ── */
+.tag{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;letter-spacing:1px;margin:2px}
+
+/* ── INPUTS ── */
+input,select,textarea{background:var(--bg);border:1px solid var(--bd);border-radius:4px;padding:7px 9px;color:var(--br);font-family:var(--fn);font-size:12px;outline:none;width:100%;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--ac)}
+textarea{resize:vertical;min-height:60px;font-size:11px;line-height:1.5}
+
+/* ── UPLOAD ── */
+#upload-zone{border:1.5px dashed var(--ac);border-radius:10px;padding:26px 16px;text-align:center;cursor:pointer;background:linear-gradient(135deg,#00e5ff08,transparent);position:relative;transition:all .2s;margin-bottom:10px}
+#upload-zone.drag{background:#00e5ff14;border-color:#00e5ffcc}
+#upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+
+/* ── BUTTONS ── */
+.btn{width:100%;padding:11px;border-radius:5px;font-family:var(--fn);font-weight:700;font-size:11px;letter-spacing:2px;cursor:pointer;border:none}
+.btn-ac{background:var(--ac);color:#000}
+.btn-out{background:transparent;border:1px solid var(--ac)55;color:var(--ac)}
+.btn-pu{background:transparent;border:1px solid var(--pu)55;color:var(--pu)}
+.btn-sm{padding:4px 9px;background:none;border:1px solid var(--bd);border-radius:3px;color:var(--mu);font-family:var(--fn);font-size:9px;cursor:pointer}
+.btn-win{padding:5px 12px;background:#00ff8822;border:1px solid #00ff8866;border-radius:3px;color:var(--gr);font-family:var(--fn);font-size:10px;cursor:pointer}
+.btn-loss{padding:5px 12px;background:#ff3d5a22;border:1px solid #ff3d5a66;border-radius:3px;color:var(--rd);font-family:var(--fn);font-size:10px;cursor:pointer}
+
+/* ── VERDICT ── */
+.v-badge{display:inline-block;padding:8px 32px;border-radius:5px;font-size:22px;font-weight:700;letter-spacing:5px;margin-bottom:8px}
+
+/* ── GRID ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+
+/* ── TRADE CARD ── */
+.trade-card{background:var(--panel);border:1px solid var(--bd);border-radius:5px;padding:11px;margin-bottom:8px}
+.trade-card.win{border-color:#00ff8844}.trade-card.loss{border-color:#ff3d5a44}
+
+/* ── STAT BOX ── */
+.stat-b{background:var(--p2);border-radius:4px;padding:10px 6px;text-align:center}
+.sv{font-size:18px;font-weight:700;margin-bottom:2px}
+.sl{font-size:8px;color:var(--mu);letter-spacing:2px}
+
+/* ── ORACLE ── */
+.o-card{background:var(--p2);border:1px solid var(--bd);border-radius:5px;padding:11px;margin-bottom:8px}
+.o-title{font-size:11px;color:var(--br);font-weight:700;line-height:1.4;margin-bottom:4px}
+.o-sum{font-size:10px;color:var(--tx);line-height:1.6;margin-bottom:7px}
+.bayes-row{display:flex;justify-content:space-between;align-items:center;background:var(--bg);border:1px solid var(--bd);border-radius:3px;padding:6px 8px;margin-bottom:4px}
+
+/* ── PROG / SPIN ── */
+.prog{height:2px;background:var(--bd);border-radius:1px;overflow:hidden}
+.prog-f{height:100%;background:linear-gradient(90deg,var(--ac),var(--pu));border-radius:1px;transition:width .4s}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--ac)33;border-top-color:var(--ac);border-radius:50%;animation:spin .8s linear infinite}
+.pulse{display:inline-block;width:7px;height:7px;background:var(--gr);border-radius:50%;animation:pulse 1.5s infinite}
+
+/* ── EXT LINK ── */
+.el{display:inline-block;padding:4px 8px;background:var(--ac)0e;border:1px solid var(--ac)2a;border-radius:3px;font-size:9px;color:var(--ac);text-decoration:none;margin:2px;letter-spacing:1px}
+.el-pu{border-color:var(--pu)2a;color:var(--pu)}
+
+/* ── INSTALL ── */
+#inst{display:none;background:#00ff8818;border:1px solid #00ff8855;border-radius:5px;padding:9px 12px;margin:10px 12px 0;align-items:center;justify-content:space-between;gap:8px;font-size:10px;color:var(--br)}
+#inst button{background:var(--gr);color:#000;border:none;border-radius:3px;padding:5px 12px;font-family:var(--fn);font-weight:700;font-size:10px;cursor:pointer}
+
+/* ── RANK TABLE ── */
+.rtab{width:100%;border-collapse:collapse;font-size:10px}
+.rtab th{color:var(--mu);text-align:left;padding:3px 5px;border-bottom:1px solid var(--bd);font-size:8px;letter-spacing:1px}
+.rtab td{padding:4px 5px;border-bottom:1px solid var(--bd)55;color:var(--tx)}
+.rn{color:var(--ac);font-weight:700;width:22px}
+
+/* ── ANIM ── */
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.fade{animation:fadeUp .3s ease}
+
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="inst"><span>📲 홈화면에 추가 가능</span><button onclick="doInstall()">설치</button></div>
+
+<!-- HEADER -->
+<div id="hdr">
+  <div class="hdr-row">
+    <div>
+      <div style="font-size:8px;letter-spacing:4px;color:var(--mu);margin-bottom:1px">ALL-IN-ONE</div>
+      <div class="logo"><span class="g">POLY</span>MASTER</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+      <div class="hdr-stats">
+        승률 <b id="s-wr">--</b> &nbsp;|&nbsp; PnL <b id="s-pnl">$0</b><br>
+        <span id="bayes-badge" style="color:var(--pu);font-size:8px"></span>
+      </div>
+      <a href="https://080168.github.io/polysniper01/" style="font-size:8px;letter-spacing:1px;color:var(--yw);text-decoration:none;padding:2px 7px;border:1px solid var(--yw)44;border-radius:3px;background:var(--yw)0e">⚡ POLYSNIPER01 →</a>
+    </div>
+  </div>
+</div>
+
+<!-- CONTENT PANELS -->
+<div id="tab-scan" class="tc on"></div>
+<div id="tab-edge" class="tc"></div>
+<div id="tab-oracle" class="tc"></div>
+<div id="tab-tennis" class="tc"></div>
+<div id="tab-log" class="tc"></div>
+<div id="tab-cal" class="tc"></div>
+<div id="tab-cf" class="tc"></div>
+<div id="tab-weather" class="tc"></div>
+
+<!-- BOTTOM NAV -->
+<div id="nav">
+  <button class="nav-btn on" onclick="go('scan',this)"><div class="ni">📸</div>스캔</button>
+  <button class="nav-btn" onclick="go('edge',this)"><div class="ni">⬡</div>분석</button>
+  <button class="nav-btn" onclick="go('oracle',this)"><div class="ni">🔮</div>Oracle</button>
+  <button class="nav-btn" onclick="go('tennis',this)"><div class="ni">🎾</div>Tennis</button>
+  <button class="nav-btn" onclick="go('log',this)"><div class="ni">📋</div>기록(<span id="log-cnt">0</span>)</button>
+  <button class="nav-btn" onclick="go('weather',this)"><div class="ni">🌤</div>날씨봇</button>
+</div>
+</div>
+
+<script>
+/* ══════════════════════════════════════
+   SHARED STATE & STORAGE
+══════════════════════════════════════ */
+let trades=[], cal={}, pendingBayes=[], bankroll=500, deferredPrompt=null;
+let currentImg=null, currentTradeId=null;
+
+const LS = {
+  get:(k,def)=>{try{return JSON.parse(localStorage.getItem(k))||def}catch{return def}},
+  set:(k,v)=>localStorage.setItem(k,JSON.stringify(v)),
+  raw:(k,def='')=>localStorage.getItem(k)||def,
+  rawSet:(k,v)=>localStorage.setItem(k,v),
+};
+
+function loadAll(){
+  trades=LS.get('pm-trades',[]);
+  cal=LS.get('pm-cal',{});
+  pendingBayes=LS.get('pm-bayes',[]);
+  bankroll=parseInt(LS.raw('pm-bank','500'));
+}
+function saveAll(){
+  LS.set('pm-trades',trades);
+  LS.set('pm-cal',cal);
+  LS.set('pm-bayes',pendingBayes);
+}
+
+/* ══════════════════════════════════════
+   MATH ENGINE
+══════════════════════════════════════ */
+const DB={
+  sinner:{name:"Jannik Sinner",rank:1,nat:"🇮🇹",clay:92,hard:88,grass:74,inj:null},
+  alcaraz:{name:"Carlos Alcaraz",rank:2,nat:"🇪🇸",clay:88,hard:85,grass:90,inj:"손목"},
+  zverev:{name:"Alexander Zverev",rank:3,nat:"🇩🇪",clay:82,hard:80,grass:68,inj:null},
+  djokovic:{name:"Novak Djokovic",rank:4,nat:"🇷🇸",clay:88,hard:87,grass:86,inj:"어깨"},
+  medvedev:{name:"Daniil Medvedev",rank:9,nat:"🇷🇺",clay:74,hard:84,grass:72,inj:null},
+  swiatek:{name:"Iga Swiatek",rank:1,nat:"🇵🇱",clay:94,hard:82,grass:72,inj:null},
+  sabalenka:{name:"Aryna Sabalenka",rank:2,nat:"🇧🇾",clay:84,hard:90,grass:78,inj:null},
+  gauff:{name:"Coco Gauff",rank:3,nat:"🇺🇸",clay:80,hard:82,grass:76,inj:null},
+  andreeva:{name:"Mirra Andreeva",rank:9,nat:"🇷🇺",clay:82,hard:76,grass:68,inj:null},
+};
+
+function findP(name){
+  if(!name)return null;
+  const n=name.toLowerCase();
+  return Object.values(DB).find(p=>n.includes(p.name.split(" ").pop().toLowerCase())||p.name.toLowerCase().includes(n));
+}
+
+function tennisEst(p1n,p2n,surf){
+  const p1=findP(p1n),p2=findP(p2n);
+  if(!p1||!p2)return null;
+  const s=surf||"clay";
+  let b=p1[s]/(p1[s]+p2[s])*100+(p2.rank-p1.rank)*0.15;
+  if(p1.inj)b-=8;if(p2.inj)b+=8;
+  return Math.min(Math.max(b,5),95);
+}
+
+function calcEV(p,price){return{ev:p*(1-price)-(1-p)*price,roi:(p*(1-price)-(1-p)*price)/price*100}}
+
+function calcKelly(p,price,bank){
+  const b=(1-price)/price,fk=(p*b-(1-p))/b;
+  if(fk<=0)return null;
+  const adj=Math.min(fk*0.25,0.05),bet=bank*adj;
+  return{fk:(fk*100).toFixed(1),adj:(adj*100).toFixed(1),bet:bet.toFixed(0),ct:Math.floor(bet/price),profit:(Math.floor(bet/price)*(1-price)).toFixed(0)};
+}
+
+function bayesChain(prior,items){
+  let p=prior/100; const log=[];
+  for(const it of(items||[])){
+    if(!it.label||!it.pT||!it.pF)continue;
+    const prev=p,num=(parseFloat(it.pT)/100)*p;
+    p=num/(num+(parseFloat(it.pF)/100)*(1-p));
+    log.push({label:it.label,from:(prev*100).toFixed(1),to:(p*100).toFixed(1),lr:(it.pT/it.pF).toFixed(2)});
+  }
+  return{prob:p,log};
+}
+
+function zone(price){
+  if(price<0.05)return{l:"극단위험",c:"#ff2255",skip:true};
+  if(price<0.10)return{l:"위험",c:"#ff4466",skip:true};
+  if(price<0.30)return{l:"주의",c:"#ffd60a",skip:false};
+  if(price<0.70)return{l:"적정",c:"#00ff88",skip:false};
+  if(price<0.90)return{l:"양호",c:"#00ff88",skip:false};
+  return{l:"근확실성",c:"#00e5ff",skip:false};
+}
+
+function getCalBias(sport,surf){
+  const key=`${sport||"other"}_${surf||"any"}`;
+  const d=cal[key];
+  if(!d||d.total<5)return 0;
+  return((d.wins/d.total)-(d.sumProb/d.total))*100;
+}
+
+function runAnalysis(price,prior,bayesItems,bank){
+  const allItems=[...(bayesItems||[]),...pendingBayes];
+  const{prob,log}=bayesChain(prior,allItems);
+  const{ev,roi}=calcEV(prob,price);
+  const kl=ev>0?calcKelly(prob,price,bank||bankroll):null;
+  const z=zone(price);
+  let verdict,vc;
+  if(z.skip||ev<=0){verdict="SKIP";vc=C.rd}
+  else if(ev<0.03){verdict="WAIT";vc=C.yw}
+  else{verdict="BUY";vc=C.gr}
+  return{prob,log,ev,roi,kl,z,verdict,vc,price,prior};
+}
+
+const C={ac:"#00e5ff",gr:"#00ff88",yw:"#ffd60a",rd:"#ff3d5a",pu:"#b388ff",mu:"#2a4055",tx:"#7090a8",br:"#dde8f0"};
+
+/* ══════════════════════════════════════
+   CLAUDE API
+══════════════════════════════════════ */
+function getKey(){return LS.raw('pm-apikey')}
+
+async function claude(messages,tools=[],max=1500){
+  const key=getKey();
+  if(!key)throw new Error("API 키 없음 — 설정에서 입력");
+  const body={model:"claude-opus-4-5",max_tokens:max,messages};
+  if(tools.length)body.tools=tools;
+  const r=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify(body)
+  });
+  const d=await r.json();
+  if(d.error)throw new Error(d.error.message);
+  return d;
+}
+
+async function scanImage(b64,mime){
+  const key=getKey();
+  if(!key)throw new Error("API 키 없음");
+  const sys=`You are a Polymarket prediction market analyst. Analyze this screenshot and respond ONLY with valid JSON (no markdown, no explanation):
+{"market_name":"string or Unknown","sport":"tennis|basketball|soccer|crypto|other","yes_price":null,"volume_24h":null,"live":false,"player1":null,"player2":null,"score_p1":null,"score_p2":null,"set_score":null,"current_game":null,"tournament":null,"surface":null,"round":null,"win_prob_p1":null,"injury_info":null,"situation_ko":"이 스크린샷에 대한 간단한 설명","edge_ko":"베팅 기회 분석","bayes_items":[{"label":"상황 설명","pT":55,"pF":45}],"recommended":"WAIT","confidence":"LOW"}`;
+  const r=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "x-api-key":key,
+      "anthropic-version":"2023-06-01",
+      "anthropic-dangerous-direct-browser-access":"true"
+    },
+    body:JSON.stringify({
+      model:"claude-opus-4-5",
+      max_tokens:1200,
+      system:sys,
+      messages:[{role:"user",content:[
+        {type:"image",source:{type:"base64",media_type:mime,data:b64}},
+        {type:"text",text:"이 스크린샷을 분석해주세요. 반드시 JSON만 응답하세요."}
+      ]}]
+    })
+  });
+  const d=await r.json();
+  if(d.error)throw new Error(d.error.message);
+  const allText=d.content?.filter(c=>c.type==="text").map(c=>c.text).join("")||"";
+  if(!allText)throw new Error("AI 응답 없음 - 스크린샷을 다시 올려주세요");
+  const clean=allText.replace(/```json|```/g,"").trim();
+  // Try to extract JSON even if there's extra text
+  const jsonMatch=clean.match(/\{[\s\S]*\}/);
+  if(!jsonMatch)throw new Error("JSON 파싱 실패");
+  try{return JSON.parse(jsonMatch[0])}
+  catch(e){
+    // Return minimal valid object so analysis can still proceed
+    return {market_name:"Unknown",sport:"other",yes_price:null,situation_ko:"스크린샷 분석 완료",edge_ko:"수동으로 가격을 입력해주세요",bayes_items:[],recommended:"WAIT",confidence:"LOW"};
+  }
+}
+
+async function fetchOracle(query){
+  const prompt=query
+    ?`Search Oracle by Polymarket articles about: "${query}" from news.polymarket.com`
+    :`Search the 4 most recent articles from news.polymarket.com Oracle newsletter`;
+  const d=await claude([{role:"user",content:prompt+`
+Return ONLY JSON array (no markdown):
+[{"title":"string","date":"string","url":"https://news.polymarket.com/p/...","tag":"Korean tag","summary_ko":"2-3 Korean sentences","key_insight_ko":"1 Korean sentence","polymarket_links":[{"q":"market question","url":"poly.market/..."}],"bayes_items":[{"label":"Korean","pT":number,"pF":number}],"sentiment":"bullish|bearish|neutral"}]`}],
+    [{type:"web_search_20250305",name:"web_search"}],2500);
+  const texts=d.content?.filter(c=>c.type==="text").map(c=>c.text).join("")||"";
+  const m=texts.match(/\[[\s\S]*?\]/);
+  if(!m)return[];
+  try{return JSON.parse(m[0])}catch{return[]}
+}
+
+/* ══════════════════════════════════════
+   TRADE MANAGEMENT
+══════════════════════════════════════ */
+function saveTrade(data){
+  const id=Date.now();
+  trades.unshift({id,ts:new Date().toISOString(),...data,outcome:null,pnl:null});
+  saveAll();
+  currentTradeId=id;
+  updateHeader();
+  document.getElementById('log-cnt').textContent=trades.length;
+  return id;
+}
+
+function markOutcome(id,won){
+  const t=trades.find(x=>x.id===id);
+  if(!t||t.outcome)return;
+  const price=t.price||0.5, bet=parseFloat(t.bet||0);
+  t.outcome=won?"WIN":"LOSS";
+  t.pnl=won?parseFloat((bet/price*(1-price)).toFixed(2)):-bet;
+  // Save counterfactual PnL if entered
+  const cfInp=document.getElementById('cf-inp-'+id);
+  if(cfInp&&cfInp.value){t.held_pnl=parseFloat(cfInp.value)||null}
+  // Update calibration
+  const key=`${t.sport||"other"}_${t.surface||"any"}`;
+  if(!cal[key])cal[key]={total:0,wins:0,sumProb:0};
+  cal[key].total++;cal[key].wins+=(won?1:0);cal[key].sumProb+=(t.myProb||0.5);
+  saveAll();updateHeader();
+  toast(won?`✅ WIN +$${t.pnl}`:`❌ LOSS -$${Math.abs(t.pnl)}`,won?C.gr:C.rd);
+  renderLog();renderCalTab();
+}
+
+function delTrade(id){trades=trades.filter(x=>x.id!==id);saveAll();updateHeader();renderLog()}
+
+/* ══════════════════════════════════════
+   BAYES POOL
+══════════════════════════════════════ */
+function addBayes(label,pT,pF){
+  if(pendingBayes.find(b=>b.label===label)){toast("이미 추가됨",C.yw);return}
+  pendingBayes.push({label,pT:String(pT),pF:String(pF)});
+  saveAll();updateBayesBadge();
+  toast(`⟳ "${label.substring(0,22)}..." 추가됨`,C.pu);
+}
+function clearBayes(){pendingBayes=[];saveAll();updateBayesBadge()}
+function updateBayesBadge(){
+  const b=document.getElementById('bayes-badge');
+  if(b)b.textContent=pendingBayes.length?`⟳ 베이즈 ${pendingBayes.length}개 대기`:'';
+}
+
+/* ══════════════════════════════════════
+   UI HELPERS
+══════════════════════════════════════ */
+function kv(k,v,vc=""){return`<div class="kv"><span class="k">${k}</span><span class="v" style="color:${vc||C.tx};font-weight:${vc?700:400}">${v}</span></div>`}
+function tag(t,c){return`<span class="tag" style="background:${c}1a;border:1px solid ${c}44;color:${c}">${t}</span>`}
+function el(label,href,c=C.ac){return`<a href="${href}" target="_blank" class="el" style="border-color:${c}2a;color:${c}">${label}</a>`}
+
+function toast(msg,color=C.ac){
+  const t=document.createElement("div");
+  t.style.cssText=`position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid ${color};border-radius:6px;padding:9px 16px;font-family:var(--fn);font-size:11px;color:${color};z-index:9999;letter-spacing:1px;white-space:nowrap;animation:fadeUp .3s ease;pointer-events:none`;
+  t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2500);
+}
+
+function updateHeader(){
+  const res=trades.filter(t=>t.outcome);
+  const wins=res.filter(t=>t.outcome==="WIN").length;
+  const pnl=res.reduce((a,t)=>a+(t.pnl||0),0);
+  const wr=res.length?Math.round(wins/res.length*100)+"%":"--";
+  const we=document.getElementById('s-wr');if(we){we.textContent=wr;we.style.color=wins>res.length*0.55?C.gr:C.tx}
+  const pe=document.getElementById('s-pnl');if(pe){pe.textContent=(pnl>=0?"+":"")+pnl.toFixed(1);pe.style.color=pnl>=0?C.gr:C.rd}
+}
+
+function setP(p){const e=document.getElementById('scan-prog');if(e)e.style.width=p+'%'}
+
+/* ══════════════════════════════════════
+   NAV
+══════════════════════════════════════ */
+function go(name,btn){
+  document.querySelectorAll('.tc').forEach(e=>e.classList.remove('on'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('tab-'+name).classList.add('on');
+  if(btn)btn.classList.add('on');
+  if(name==='log')renderLog();
+  if(name==='cal')renderCalTab();
+  if(name==='oracle')renderOracleTab();
+  if(name==='tennis')renderTennisTab();
+  if(name==='edge')renderEdgeTab();
+  if(name==='cf')renderCFTab();
+  if(name==='weather')renderWeatherTab();
+}
+
+/* ══════════════════════════════════════
+   TAB 1: SCAN
+══════════════════════════════════════ */
+function renderScanUpload(){
+  const hasKey=!!getKey();
+  document.getElementById('tab-scan').innerHTML=`<div class="fade" style="padding:12px">
+    <div id="upload-zone">
+      <input type="file" accept="image/*" onchange="onFile(event)">
+      <div style="font-size:32px;margin-bottom:8px">📸</div>
+      <div style="font-size:13px;color:var(--br);font-weight:700;letter-spacing:1px;margin-bottom:4px">스크린샷 올리기</div>
+      <div style="font-size:10px;color:var(--mu)">Polymarket · TennisONE · OddsPortal · Binance</div>
+    </div>
+    ${!hasKey?`<div class="sec" style="border-color:${C.yw}44">
+      <div style="font-size:10px;color:${C.yw};margin-bottom:8px">⚠ Claude API 키가 필요합니다</div>
+      <div style="display:flex;gap:6px">
+        <input type="password" id="key-inp" placeholder="sk-ant-..." style="font-size:11px">
+        <button onclick="saveKey()" style="padding:7px 12px;background:var(--ac);color:#000;border:none;border-radius:4px;font-family:var(--fn);font-weight:700;font-size:10px;cursor:pointer;white-space:nowrap">저장</button>
+      </div>
+    </div>`:`<div class="sec" style="background:var(--p2)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:10px;color:var(--tx)">잔고 (USDC)</span>
+        <input type="number" value="${bankroll}" style="width:100px;text-align:center" onchange="bankroll=+this.value;LS.rawSet('pm-bank',bankroll)">
+      </div>
+      ${pendingBayes.length?`<div style="margin-top:8px;font-size:10px;color:${C.pu}">⟳ Oracle 베이즈 ${pendingBayes.length}개 대기 중 — 분석 시 자동 반영</div>`:''}
+      ${trades.filter(t=>t.outcome).length>=5?`<div style="margin-top:6px;font-size:10px;color:${C.ac}">📊 보정 데이터 ${trades.filter(t=>t.outcome).length}건 활성화</div>`:''}
+    </div>`}
+  </div>`;
+  const z=document.getElementById('upload-zone');
+  if(z){
+    z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('drag')});
+    z.addEventListener('dragleave',()=>z.classList.remove('drag'));
+    z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('drag');processFile(e.dataTransfer.files[0])});
+  }
+}
+
+function saveKey(){
+  const v=document.getElementById('key-inp')?.value.trim();
+  if(v){LS.rawSet('pm-apikey',v);renderScanUpload();toast("API 키 저장됨",C.gr)}
+}
+
+function onFile(e){processFile(e.target.files[0])}
+
+async function processFile(file){
+  if(!file?.type.startsWith('image/'))return;
+  if(!getKey()){toast("API 키를 먼저 입력하세요",C.rd);return}
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    currentImg=e.target.result;
+    document.getElementById('tab-scan').innerHTML=`<div style="padding:12px;text-align:center;padding-top:40px">
+      <img src="${currentImg}" style="width:100%;max-height:140px;object-fit:cover;border-radius:7px;margin-bottom:16px;border:1px solid var(--bd)">
+      <div class="spin"></div>
+      <div style="font-size:11px;color:${C.ac};letter-spacing:2px;margin:12px 0 5px">AI 분석 중...</div>
+      <div style="font-size:10px;color:var(--mu);margin-bottom:12px">Claude Vision이 경기를 읽고 있습니다</div>
+      <div class="prog" style="max-width:200px;margin:0 auto"><div class="prog-f" id="scan-prog" style="width:15%"></div></div>
+    </div>`;
+    try{
+      setP(40);
+      const ai=await scanImage(currentImg.split(",")[1],file.type);
+      setP(75);
+      if(!ai)throw new Error("AI 응답 없음");
+      const price=ai.yes_price;
+      const tEst=tennisEst(ai.player1,ai.player2,ai.surface);
+      const calBias=getCalBias(ai.sport,ai.surface);
+      const rawPrior=ai.win_prob_p1??tEst??(price?price*100:null);
+      const prior=rawPrior?Math.min(Math.max(rawPrior+calBias,5),95):null;
+      let analysis=null;
+      if(price&&price>0&&price<1&&prior){
+        analysis=runAnalysis(price,prior,ai.bayes_items,bankroll);
+        analysis.tEst=tEst;analysis.calBias=calBias;
+      }
+      const tradeId=price?saveTrade({
+        market:ai.market_name||"Unknown",sport:ai.sport,surface:ai.surface,
+        player1:ai.player1,player2:ai.player2,tournament:ai.tournament,
+        price,myProb:analysis?.prob,ev:analysis?.ev,verdict:analysis?.verdict,
+        bet:analysis?.kl?.bet||"0",calBias
+      }):null;
+      setP(100);
+      setTimeout(()=>renderScanResult(ai,analysis,tradeId),200);
+    }catch(err){
+      document.getElementById('tab-scan').innerHTML=`<div style="padding:12px">
+        <div class="sec" style="border-color:${C.rd}44">
+          <div style="font-size:11px;color:${C.rd};margin-bottom:8px">⚠ 오류: ${err.message}</div>
+          <button class="btn btn-out" onclick="renderScanUpload()">다시 시도</button>
+        </div>
+      </div>`;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderScanResult(ai,an,tradeId){
+  const{prob,log,ev,roi,kl,z,verdict,vc,price,prior,tEst,calBias}=an||{};
+  const glow=verdict?`0 0 26px ${vc}44`:'';
+  let h=`<div class="fade" style="padding:12px">`;
+  // Image
+  h+=`<div style="position:relative;margin-bottom:10px">
+    <img src="${currentImg}" style="width:100%;max-height:130px;object-fit:cover;border-radius:7px;border:1px solid var(--bd)">
+    <div style="position:absolute;top:6px;right:6px"><button onclick="renderScanUpload()" style="background:#ff3d5a88;border:none;border-radius:3px;color:#fff;padding:3px 8px;cursor:pointer;font-family:var(--fn);font-size:10px">✕ 다시</button></div>
+    ${ai.live?`<div style="position:absolute;top:6px;left:6px;display:flex;align-items:center;gap:4px;background:#00000099;border-radius:3px;padding:3px 7px"><div class="pulse"></div><span style="font-size:8px;color:#fff">LIVE</span></div>`:''}
+  </div>`;
+  // Cal bias
+  if(calBias&&Math.abs(calBias)>1)h+=`<div style="background:${calBias>0?C.gr:C.yw}18;border:1px solid ${calBias>0?C.gr:C.yw}44;border-radius:4px;padding:6px 10px;margin-bottom:8px;font-size:9px;color:${calBias>0?C.gr:C.yw}">📊 과거 보정 ${calBias>0?"+":""}${calBias.toFixed(1)}%p 적용 (${trades.filter(t=>t.outcome&&t.sport===ai.sport).length}건 기반)</div>`;
+  // AI narrative
+  h+=`<div class="sec"><div class="stitle">🤖 AI 분석</div>
+    <div style="font-size:11px;color:var(--br);line-height:1.8;margin-bottom:8px">${ai.situation_ko||""}</div>
+    ${ai.edge_ko?`<div style="font-size:10px;color:${C.ac};line-height:1.5;padding-top:7px;border-top:1px solid var(--bd)">💡 ${ai.edge_ko}</div>`:''}
+  </div>`;
+  // Match
+  if(ai.player1||ai.tournament){
+    const p1=findP(ai.player1),p2=findP(ai.player2);
+    h+=`<div class="sec"><div class="stitle">경기 정보</div>
+      ${ai.player1&&ai.player2?`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+        <div style="flex:1"><div style="font-size:12px;color:var(--br);font-weight:700">${p1?.nat||""} ${ai.player1}</div>${p1?`<div style="font-size:9px;color:${C.mu}">WR #${p1.rank}${p1.inj?` ⚠${p1.inj}`:""}</div>`:''} ${ai.score_p1?`<div style="font-size:20px;font-weight:700;color:${C.ac}">${ai.score_p1}</div>`:''}</div>
+        <div style="color:${C.mu};font-size:10px;margin:0 8px">vs</div>
+        <div style="flex:1;text-align:right"><div style="font-size:12px;color:var(--br);font-weight:700">${p2?.nat||""} ${ai.player2}</div>${p2?`<div style="font-size:9px;color:${C.mu}">WR #${p2.rank}${p2.inj?` ⚠${p2.inj}`:""}</div>`:''} ${ai.score_p2?`<div style="font-size:20px;font-weight:700;color:${C.tx}">${ai.score_p2}</div>`:''}</div>
+      </div>`:''}
+      <div>${ai.tournament?tag(ai.tournament,C.ac):''}${ai.surface?tag(ai.surface.toUpperCase(),C.yw):''}${ai.round?tag(ai.round,C.pu):''}${ai.set_score?tag("세트 "+ai.set_score,C.gr):''}${ai.injury_info?tag("⚠ "+ai.injury_info,C.rd):''}</div>
+      ${tEst?`<div style="margin-top:7px;padding:5px 8px;background:${C.ac}0c;border-radius:3px;font-size:10px"><span style="color:${C.mu}">랭킹 추정: </span><b style="color:${C.ac}">${tEst.toFixed(1)}%</b></div>`:''}
+    </div>`;
+  }
+  // Verdict
+  if(an&&price){
+    h+=`<div class="sec" style="text-align:center;box-shadow:${glow}">
+      <div style="font-size:9px;letter-spacing:3px;color:${C.mu};margin-bottom:6px">${(ai.market_name||"").substring(0,52)}</div>
+      <div class="v-badge" style="background:${vc}1a;border:1px solid ${vc};color:${vc}">${verdict}</div>
+      <div>${tag("Yes $"+price,vc)}${tag(z.l,z.c)}${tag(ai.confidence||"--",vc)}</div>
+    </div>
+    <div class="g2">
+      <div class="sec"><div class="stitle">베이즈·롱샷</div>
+        ${kv("시작 확률",prior.toFixed(1)+"%")}
+        ${log.map(l=>`<div class="kv" style="flex-direction:column;align-items:flex-start;gap:1px"><span style="font-size:10px;color:var(--br)">${l.label}</span><span style="font-size:9px;color:${C.mu}">LR=${l.lr} · <span style="color:${C.yw}">${l.from}%</span>→<span style="color:${C.gr}">${l.to}%</span></span></div>`).join("")}
+        ${kv("최종 확률",(prob*100).toFixed(1)+"%",C.ac)}${kv("시장 가격",(price*100).toFixed(1)+"%")}
+      </div>
+      <div class="sec"><div class="stitle">EV·켈리</div>
+        ${kv("EV",(ev>0?"+":"")+ev.toFixed(4),ev>0?C.gr:C.rd)}
+        ${kv("ROI",(roi>0?"+":"")+roi.toFixed(1)+"%",ev>0?C.gr:C.rd)}
+        ${kl?`<div style="border-top:1px solid var(--bd);margin:4px 0"></div>
+          ${kv("풀 켈리",kl.fk+"%")}${kv("적용 켈리",kl.adj+"%")}
+          ${kv("베팅액","$"+kl.bet,C.br)}${kv("계약수",kl.ct+"개")}
+          ${kv("최대수익","+$"+kl.profit,C.gr)}
+        `:`<div style="font-size:10px;color:${C.rd};margin-top:5px">베팅 없음</div>`}
+      </div>
+    </div>
+    <div class="sec">${kv("내쉬·진입","메이커 65% — 지정가")}${kv("권장 지정가","$"+(price*0.97).toFixed(3),C.yw)}${ai.volume_24h?kv("24h 거래량",ai.volume_24h):''}</div>
+    ${tradeId?`<div class="sec" style="border-color:${C.ac}33">
+      <div class="stitle" style="color:${C.ac}">💾 결과 기록</div>
+      <div style="font-size:10px;color:${C.tx};margin-bottom:7px">경기 종료 후 결과를 입력하면 다음 분석에 반영됩니다</div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:9px;color:${C.mu};margin-bottom:3px">반사실 PnL (홀드했을 경우 예상 수익, 선택)</div>
+        <input type="number" id="cf-inp-${tradeId}" placeholder="예: 1156 (Ankara 홀드시)" style="font-size:12px;text-align:center">
+      </div>
+      <div style="display:flex;gap:8px" id="outcome-btns-${tradeId}">
+        <button class="btn-win" style="flex:1;padding:10px" onclick="markOutcome(${tradeId},true);document.getElementById('outcome-btns-${tradeId}').innerHTML='<span style=\\'color:${C.gr};font-size:11px\\'>✅ WIN 저장됨</span>'">✅ WIN</button>
+        <button class="btn-loss" style="flex:1;padding:10px" onclick="markOutcome(${tradeId},false);document.getElementById('outcome-btns-${tradeId}').innerHTML='<span style=\\'color:${C.rd};font-size:11px\\'>❌ LOSS 저장됨</span>'">❌ LOSS</button>
+      </div>
+    </div>`:''}`;}
+  // Links
+  h+=`<div class="sec"><div class="stitle">🔗 검증 소스</div><div>
+    ${el("📊 OddsPortal","https://www.oddsportal.com/tennis/")}
+    ${el("📉 드로핑오즈","https://www.oddsportal.com/dropping-odds/#tennis")}
+    ${el("🎾 TennisONE","https://www.tennis.one")}
+    ${el("⚡ Flashscore","https://www.flashscore.com/tennis")}
+    ${el("📈 타임라인","https://journalism.thespread.news/market-timeline")}
+    ${el("🔮 Oracle","https://news.polymarket.com")}
+  </div></div>
+  <button class="btn btn-out" onclick="renderScanUpload()">📸 새 스크린샷 분석</button>
+  </div>`;
+  document.getElementById('tab-scan').innerHTML=h;
+}
+
+/* ══════════════════════════════════════
+   TAB 2: EDGE (Manual Analysis)
+══════════════════════════════════════ */
+let edgeNewsList=[{label:"",pT:"",pF:""}];
+let edgeResult=null;
+
+function renderEdgeTab(){
+  const el_=document.getElementById('tab-edge');
+  el_.innerHTML=`<div class="fade" style="padding:12px">
+
+  ${pendingBayes.length?`<div style="background:${C.pu}18;border:1px solid ${C.pu}44;border-radius:4px;padding:7px 10px;margin-bottom:10px;font-size:10px;color:${C.pu}">⟳ Oracle 베이즈 ${pendingBayes.length}개 대기 중 — 분석 시 자동 반영 <button onclick="clearBayes();renderEdgeTab()" style="float:right;background:none;border:none;color:${C.mu};cursor:pointer;font-family:var(--fn);font-size:9px">지우기</button></div>`:''}
+
+  <!-- Market Search -->
+  <div class="sec"><div class="stitle">🔍 마켓 검색</div>
+    <div style="position:relative">
+      <input id="e-search" placeholder="마켓 검색... (ATP, BTC, Fed...)" oninput="edgeSearch(this.value)" style="padding-right:32px">
+      <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:${C.ac};font-size:14px">⌕</span>
+    </div>
+    <div id="e-sr" style="display:none;background:var(--p2);border:1px solid var(--bd);border-radius:4px;margin-top:4px;max-height:200px;overflow-y:auto"></div>
+    <div id="e-liq" style="display:none;margin-top:8px"></div>
+  </div>
+
+  <!-- Market Info -->
+  <div class="sec"><div class="stitle">◈ 마켓 정보</div>
+    <div style="margin-bottom:8px"><input id="e-mkt" placeholder="마켓 이름" style="margin-bottom:0"></div>
+    <div class="g3" style="margin-bottom:8px">
+      <div><div style="font-size:9px;color:${C.mu};margin-bottom:3px">카테고리</div>
+        <select id="e-cat"><option>스포츠</option><option>금융/크립토</option><option>정치/기타</option></select></div>
+      <div><div style="font-size:9px;color:${C.mu};margin-bottom:3px">Yes 가격</div>
+        <input id="e-price" type="number" step="0.01" min="0.01" max="0.99" placeholder="0.72"></div>
+      <div><div style="font-size:9px;color:${C.mu};margin-bottom:3px">잔고 (USDC)</div>
+        <input id="e-bank" type="number" value="${bankroll}"></div>
+    </div>
+    <button class="btn btn-ac" onclick="runEdge()">▶ 5공식 분석</button>
+  </div>
+
+  <!-- Bayes -->
+  <div class="sec"><div class="stitle">⟳ 베이즈 업데이트 <span style="color:${C.mu};font-size:8px;letter-spacing:1px">수동 입력</span></div>
+    <div id="e-bayes-list"></div>
+    <button onclick="addEdgeNews()" style="width:100%;padding:7px;background:none;border:1px dashed var(--bd);border-radius:4px;color:${C.mu};font-family:var(--fn);font-size:10px;cursor:pointer;letter-spacing:1px;margin-top:4px">+ 뉴스/데이터 추가</button>
+  </div>
+
+  <!-- OddsPortal -->
+  <div class="sec"><div class="stitle" style="color:#e85d04">📊 OddsPortal 배당 비교</div>
+    <div style="display:flex;gap:5px;margin-bottom:8px">
+      <button id="fmt-dec" onclick="setOFmt('d',this)" style="padding:5px 9px;background:var(--ac);color:#000;border:none;border-radius:3px;font-family:var(--fn);font-size:9px;cursor:pointer">소수</button>
+      <button id="fmt-am" onclick="setOFmt('a',this)" style="padding:5px 9px;background:none;border:1px solid var(--bd);color:${C.mu};border-radius:3px;font-family:var(--fn);font-size:9px;cursor:pointer">미국</button>
+    </div>
+    <div id="bk-rows"><div class="bk-r" style="display:grid;grid-template-columns:1fr 68px 68px 30px;gap:5px;margin-bottom:6px">
+      <input class="bk-n" placeholder="Bet365" style="font-size:10px">
+      <input class="bk-p1" type="number" step="0.01" placeholder="1.72" oninput="recalcOdds()" style="font-size:12px;text-align:center">
+      <input class="bk-p2" type="number" step="0.01" placeholder="2.10" oninput="recalcOdds()" style="font-size:12px;text-align:center">
+      <button onclick="addBkRow()" class="btn-sm" style="color:${C.ac};border-color:${C.ac}33;padding:0">+</button>
+    </div></div>
+    <div id="odds-res" style="display:none;background:var(--p2);border-radius:4px;padding:9px;margin-top:6px"></div>
+    <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">
+      ${el("테니스 배당","https://www.oddsportal.com/tennis/","#e85d04")}
+      ${el("드로핑오즈","https://www.oddsportal.com/dropping-odds/#tennis","#e85d04")}
+      ${el("밸류벳","https://www.oddsportal.com/value-bets/","#e85d04")}
+      ${el("슈어벳","https://www.oddsportal.com/sure-bets/","#e85d04")}
+    </div>
+  </div>
+
+  <!-- TennisONE Data Input -->
+  <div class="sec" style="border-color:#00e5ff44">
+    <div class="stitle" style="color:#00e5ff">🎾 TennisONE 데이터 입력</div>
+    <div style="font-size:10px;color:var(--mu);margin-bottom:10px;line-height:1.6">
+      <a href="https://www.tennis.one" target="_blank" style="color:var(--ac);text-decoration:none">tennis.one</a>에서 확인한 데이터를 입력하면 분석에 자동 반영됩니다
+    </div>
+    <div class="g2" style="margin-bottom:8px">
+      <div><div style="font-size:9px;color:var(--mu);margin-bottom:3px">P1 최근 5경기 (W/L)</div>
+        <input id="t1-p1form" placeholder="예: W W L W W" oninput="updateTennisContext()"></div>
+      <div><div style="font-size:9px;color:var(--mu);margin-bottom:3px">P2 최근 5경기 (W/L)</div>
+        <input id="t1-p2form" placeholder="예: L W W L W" oninput="updateTennisContext()"></div>
+    </div>
+    <div class="g2" style="margin-bottom:8px">
+      <div><div style="font-size:9px;color:var(--mu);margin-bottom:3px">P1 서피스 승률</div>
+        <input id="t1-p1surf" type="number" placeholder="예: 68 (%)" oninput="updateTennisContext()"></div>
+      <div><div style="font-size:9px;color:var(--mu);margin-bottom:3px">P2 서피스 승률</div>
+        <input id="t1-p2surf" type="number" placeholder="예: 72 (%)" oninput="updateTennisContext()"></div>
+    </div>
+    <div class="g2" style="margin-bottom:8px">
+      <div><div style="font-size:9px;color:var(--mu);margin-bottom:3px">H2H (P1 vs P2)</div>
+        <input id="t1-h2h" placeholder="예: 3-1 (P1 우세)" oninput="updateTennisContext()"></div>
+      <div><div style="font-size:9px;color:var(--mu);margin-bottom:3px">라이브 스코어</div>
+        <input id="t1-score" placeholder="예: 6-4, 2-1 (P1 서브)" oninput="updateTennisContext()"></div>
+    </div>
+    <div style="margin-bottom:8px"><div style="font-size:9px;color:var(--mu);margin-bottom:3px">추가 메모 (부상/컨디션 등)</div>
+      <input id="t1-note" placeholder="예: P1 발목 부상 의심, P2 2연승 중" oninput="updateTennisContext()"></div>
+    <div id="t1-preview" style="display:none;background:var(--bg);border:1px solid var(--ac)33;border-radius:4px;padding:8px;font-size:10px;color:var(--ac);line-height:1.6"></div>
+    <div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap">
+      <a href="https://www.tennis.one/home" target="_blank" class="el">🎾 TennisONE 라이브</a>
+      <a href="https://www.tennis.one/scores" target="_blank" class="el">📊 스코어</a>
+      <a href="https://www.tennis.one/schedule" target="_blank" class="el">📅 스케줄</a>
+    </div>
+  </div>
+
+  <!-- Tennis Ranks Quick Ref -->
+  <div class="sec"><div class="stitle">🎾 ATP/WTA 랭킹</div>
+    <div class="g2">
+      <div>
+        <div style="font-size:9px;color:${C.mu};letter-spacing:1px;margin-bottom:5px">ATP</div>
+        <table class="rtab">
+          ${[["1","🇮🇹 Sinner","14,350"],["2","🇪🇸 Alcaraz ⚠손목","12,960"],["3","🇩🇪 Zverev","6,155"],["4","🇷🇸 Djokovic ⚠어깨","4,700"],["9","🇷🇺 Medvedev","3,460"]].map(([n,p,pt])=>`<tr><td class="rn">${n}</td><td style="font-size:9px;color:var(--br)">${p}</td></tr>`).join("")}
+        </table>
+      </div>
+      <div>
+        <div style="font-size:9px;color:${C.mu};letter-spacing:1px;margin-bottom:5px">WTA</div>
+        <table class="rtab">
+          ${[["1","🇵🇱 Swiatek"],["2","🇧🇾 Sabalenka"],["3","🇺🇸 Gauff"],["9","🇷🇺 Andreeva"],["28","🇺🇦 Kostyuk🏆"]].map(([n,p])=>`<tr><td class="rn">${n}</td><td style="font-size:9px;color:var(--br)">${p}</td></tr>`).join("")}
+        </table>
+      </div>
+    </div>
+    <div style="font-size:9px;color:${C.mu};margin-top:5px">다음: Rome Masters (5/5~18) · Roland Garros (5/25~)</div>
+  </div>
+
+  <div id="e-result"></div>
+
+  <!-- ══ INFORMATION THEORY TOOLS (0xDipper / Shannon) ══ -->
+  <div style="margin-top:4px;background:${C.ac}08;border:1px solid ${C.ac}1a;border-radius:7px;padding:10px 12px;margin-bottom:10px">
+    <div style="font-size:10px;color:${C.ac};font-weight:700;letter-spacing:2px;margin-bottom:2px">INFORMATION THEORY EDGE</div>
+    <div style="font-size:9px;color:${C.mu}">Shannon · Kelly · 0xDipper 전략 · 엣지를 bit 단위로 계산</div>
+  </div>
+
+  <!-- TOOL 1: KL-Divergence -->
+  <div class="sec" style="border-color:${C.ac}33">
+    <div class="stitle" style="color:${C.ac}">① KL-Divergence — 엣지 측정 (bit)</div>
+    <div style="font-size:9px;color:${C.mu};margin-bottom:10px;line-height:1.6">내 확률 vs 시장 가격의 정보 차이를 bit로 계산.<br><b style="color:${C.gr}">&gt;0.10 bit</b> = 트레이드 · <b style="color:${C.yw}">0.05~0.10</b> = 경계 · <b style="color:${C.rd}">&lt;0.05</b> = SKIP</div>
+    <div class="g2" style="margin-bottom:8px">
+      <div><div style="font-size:9px;color:${C.mu};margin-bottom:3px">내 추정 확률 (%)</div>
+        <input type="number" id="kl-mine" placeholder="55" min="1" max="99" oninput="calcKL()" style="text-align:center"></div>
+      <div><div style="font-size:9px;color:${C.mu};margin-bottom:3px">시장 가격 ($)</div>
+        <input type="number" id="kl-mkt" step="0.01" placeholder="0.35" min="0.01" max="0.99" oninput="calcKL()" style="text-align:center"></div>
+    </div>
+    <div id="kl-result" style="font-size:10px;color:${C.mu};text-align:center;padding:6px">값 입력 시 자동 계산</div>
+  </div>
+
+  <!-- TOOL 2: Max-Entropy Signal Fusion -->
+  <div class="sec" style="border-color:${C.pu}33">
+    <div class="stitle" style="color:${C.pu}">② Max-Entropy 신호 융합</div>
+    <div style="font-size:9px;color:${C.mu};margin-bottom:10px;line-height:1.6">모순되는 신호들을 과적합 없이 결합. 신뢰도(가중치)가 높을수록 더 반영됨.</div>
+    <div id="me-signals">
+      ${[["기본 모델",0.4,1.0],["뉴스 분석",0.6,2.0],["오더북",0.5,1.5]].map((s,i)=>`
+      <div class="me-row" style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:5px;margin-bottom:6px;align-items:end">
+        <div>${i===0?`<div style="font-size:8px;color:${C.mu};margin-bottom:2px">신호명</div>`:''}
+          <input class="me-label" value="${s[0]}" placeholder="신호명" style="font-size:10px"></div>
+        <div>${i===0?`<div style="font-size:8px;color:${C.mu};margin-bottom:2px">확률(%)</div>`:''}
+          <input type="number" class="me-prob" value="${s[1]*100}" min="1" max="99" oninput="calcMaxEntropy()" style="text-align:center;font-size:11px"></div>
+        <div>${i===0?`<div style="font-size:8px;color:${C.mu};margin-bottom:2px">신뢰도</div>`:''}
+          <input type="number" class="me-conf" value="${s[2]}" min="0.1" max="10" step="0.1" oninput="calcMaxEntropy()" style="text-align:center;font-size:11px"></div>
+        <div style="margin-top:${i===0?'14':'0'}px">
+          ${i>0?`<button onclick="this.closest('.me-row').remove();calcMaxEntropy()" class="btn-sm" style="color:${C.rd}">✕</button>`:'<span style="display:block;width:28px"></span>'}
+        </div>
+      </div>`).join('')}
+    </div>
+    <button onclick="addMESignal()" class="btn-sm" style="color:${C.pu};border-color:${C.pu}44;width:100%;margin-bottom:8px">+ 신호 추가</button>
+    <div id="me-result" style="font-size:10px;color:${C.mu};text-align:center;padding:6px">값 입력 시 자동 계산</div>
+  </div>
+
+  <!-- TOOL 3: Insider Detector -->
+  <div class="sec" style="border-color:${C.yw}33">
+    <div class="stitle" style="color:${C.yw}">③ 인사이더 탐지 — 엔트로피 붕괴</div>
+    <div style="font-size:9px;color:${C.mu};margin-bottom:10px;line-height:1.6">가격 시계열에서 엔트로피가 급격히 하락하면 인사이더 진입 의심.<br>|dH/dt| > 3σ = 이상 탐지 (뉴스 없는 경우 인사이더)</div>
+    <div style="margin-bottom:8px">
+      <div style="font-size:9px;color:${C.mu};margin-bottom:3px">가격 시계열 (콤마 구분, 5분 간격)</div>
+      <textarea id="id-prices" rows="3" placeholder="0.52, 0.53, 0.54, 0.58, 0.68, 0.70..." oninput="calcInsider()"></textarea>
+    </div>
+    <div class="g2" style="margin-bottom:8px">
+      <div><div style="font-size:9px;color:${C.mu};margin-bottom:3px">롤링 윈도우</div>
+        <input type="number" id="id-win" value="6" min="3" max="20" oninput="calcInsider()" style="text-align:center"></div>
+      <div><div style="font-size:9px;color:${C.mu};margin-bottom:3px">시그마 임계값</div>
+        <input type="number" id="id-k" value="3" step="0.5" min="1" max="5" oninput="calcInsider()" style="text-align:center"></div>
+    </div>
+    <div id="id-result" style="font-size:10px;color:${C.mu};text-align:center;padding:6px">가격 시계열 입력 시 분석</div>
+  </div>
+
+  </div>`;
+  renderEdgeBayesList();
+  setTimeout(()=>{calcKL();calcMaxEntropy();},100);
+}
+
+/* ══════════════════════════════════════
+   INFORMATION THEORY ENGINE (Shannon/0xDipper)
+══════════════════════════════════════ */
+function shannonEntropy(p){
+  p=Math.max(0.001,Math.min(0.999,p));
+  const q=1-p;
+  return -(p*Math.log2(p)+q*Math.log2(q));
+}
+
+function klDivBinary(pMine,pMkt){
+  pMine=Math.max(0.01,Math.min(0.99,pMine));
+  pMkt=Math.max(0.01,Math.min(0.99,pMkt));
+  const q=1-pMine, qm=1-pMkt;
+  return pMine*Math.log2(pMine/pMkt)+q*Math.log2(q/qm);
+}
+
+function calcKL(){
+  const mineEl=document.getElementById('kl-mine');
+  const mktEl=document.getElementById('kl-mkt');
+  const res=document.getElementById('kl-result');
+  if(!mineEl||!mktEl||!res)return;
+  const pMine=parseFloat(mineEl.value)/100;
+  const pMkt=parseFloat(mktEl.value);
+  if(isNaN(pMine)||isNaN(pMkt)||pMine<=0||pMkt<=0){res.innerHTML=`<span style="color:var(--mu)">값 입력 시 자동 계산</span>`;return}
+  const kl=klDivBinary(pMine,pMkt);
+  const hMkt=shannonEntropy(pMkt);
+  const hMine=shannonEntropy(pMine);
+  const ev=pMine*(1-pMkt)-(1-pMine)*pMkt;
+
+  let verdict,vc,desc;
+  if(kl>0.30){verdict="⚠ 계산 확인";vc=C.rd;desc="KL>0.30 — 내 모델이 틀렸을 가능성"}
+  else if(kl>=0.10){verdict="BUY";vc=C.gr;desc="진짜 엣지 · 프로 구간"}
+  else if(kl>=0.05){verdict="WAIT";vc=C.yw;desc="경계 구간 · 수수료 고려"}
+  else{verdict="SKIP";vc=C.rd;desc="엣지 없음 · 통과"}
+
+  res.innerHTML=`<div style="text-align:left">
+    <div style="text-align:center;margin-bottom:10px">
+      <div style="font-size:24px;font-weight:700;color:${vc}">${kl.toFixed(4)} bit</div>
+      <div style="font-size:10px;color:${vc};margin-top:2px">${verdict} — ${desc}</div>
+    </div>
+    <div class="g3">
+      ${kv("내 확률",(pMine*100).toFixed(1)+"%",C.ac)}
+      ${kv("시장가격",(pMkt*100).toFixed(1)+"%")}
+      ${kv("EV",(ev>0?"+":"")+ev.toFixed(4),ev>0?C.gr:C.rd)}
+    </div>
+    <div class="g2" style="margin-top:6px">
+      ${kv("H(시장)",hMkt.toFixed(4)+" bit")}
+      ${kv("H(내모델)",hMine.toFixed(4)+" bit")}
+    </div>
+    <div style="margin-top:8px">
+      <div style="height:4px;background:var(--bd);border-radius:2px;overflow:hidden">
+        <div style="height:100%;width:${Math.min(100,(kl/0.30)*100)}%;background:${vc};border-radius:2px;transition:width .3s"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:8px;color:${C.mu};margin-top:2px">
+        <span>0 SKIP</span><span style="color:${C.yw}">0.05</span><span style="color:${C.gr}">0.10 TRADE</span><span>0.30</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function addMESignal(){
+  const c=document.getElementById('me-signals');if(!c)return;
+  const d=document.createElement('div');
+  d.className='me-row';
+  d.style.cssText='display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:5px;margin-bottom:6px;align-items:end';
+  d.innerHTML=`<input class="me-label" placeholder="신호명" style="font-size:10px">
+    <input type="number" class="me-prob" placeholder="50" min="1" max="99" oninput="calcMaxEntropy()" style="text-align:center;font-size:11px">
+    <input type="number" class="me-conf" value="1" min="0.1" max="10" step="0.1" oninput="calcMaxEntropy()" style="text-align:center;font-size:11px">
+    <button onclick="this.closest('.me-row').remove();calcMaxEntropy()" class="btn-sm" style="color:${C.rd}">✕</button>`;
+  c.appendChild(d);
+}
+
+function calcMaxEntropy(){
+  const rows=document.querySelectorAll('.me-row');
+  const res=document.getElementById('me-result');if(!res)return;
+  const signals=[];
+  rows.forEach(r=>{
+    const p=parseFloat(r.querySelector('.me-prob')?.value)/100;
+    const w=parseFloat(r.querySelector('.me-conf')?.value)||1;
+    const l=r.querySelector('.me-label')?.value||'';
+    if(!isNaN(p)&&p>0&&p<1)signals.push({p,w,l});
+  });
+  if(signals.length===0){res.innerHTML=`<span style="color:var(--mu)">신호 입력 시 자동 계산</span>`;return}
+
+  const totalW=signals.reduce((a,s)=>a+s.w,0);
+  const fused=Math.max(0.01,Math.min(0.99,signals.reduce((a,s)=>a+s.p*s.w,0)/totalW));
+  const hFused=shannonEntropy(fused);
+
+  // KL from each signal to fused
+  const divergences=signals.map(s=>({...s,kl:klDivBinary(s.p,fused)}));
+
+  res.innerHTML=`<div style="text-align:left">
+    <div style="text-align:center;margin-bottom:10px">
+      <div style="font-size:22px;font-weight:700;color:${C.pu}">${(fused*100).toFixed(2)}%</div>
+      <div style="font-size:9px;color:${C.mu};margin-top:2px">Max-Entropy 융합 확률 · H=${hFused.toFixed(3)} bit</div>
+    </div>
+    ${divergences.map(s=>{
+      const bar=Math.min(100,(s.w/totalW)*100);
+      return`<div style="margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:2px">
+          <span style="color:var(--br)">${s.l||'신호'}</span>
+          <span style="color:${C.mu}">p=${(s.p*100).toFixed(1)}% · w=${s.w} · KL=${s.kl.toFixed(4)}bit</span>
+        </div>
+        <div style="height:3px;background:var(--bd);border-radius:2px">
+          <div style="height:100%;width:${bar.toFixed(0)}%;background:${C.pu}88;border-radius:2px"></div>
+        </div>
+      </div>`;
+    }).join('')}
+    <div style="margin-top:8px;padding:8px;background:${C.pu}0e;border:1px solid ${C.pu}33;border-radius:4px">
+      ${kv("융합 확률",(fused*100).toFixed(2)+"%",C.pu)}
+      ${kv("엔트로피",hFused.toFixed(4)+" bit")}
+    </div>
+    <button onclick="document.getElementById('e-price').value='${fused.toFixed(3)}';document.getElementById('kl-mkt').value='${fused.toFixed(3)}';calcKL();toast('Max-Entropy 확률 적용',C.pu)" style="width:100%;margin-top:8px;padding:6px;background:${C.pu}18;border:1px solid ${C.pu}44;border-radius:3px;color:${C.pu};font-family:var(--fn);font-size:9px;cursor:pointer">↳ KL 계산기에 적용</button>
+  </div>`;
+}
+
+function calcInsider(){
+  const raw=document.getElementById('id-prices')?.value;
+  const win=parseInt(document.getElementById('id-win')?.value)||6;
+  const k=parseFloat(document.getElementById('id-k')?.value)||3;
+  const res=document.getElementById('id-result');if(!res)return;
+  if(!raw){res.innerHTML=`<span style="color:var(--mu)">가격 시계열 입력 시 분석</span>`;return}
+
+  const prices=raw.split(',').map(s=>parseFloat(s.trim())).filter(p=>!isNaN(p)&&p>0&&p<1);
+  if(prices.length<win+2){res.innerHTML=`<span style="color:${C.yw}">최소 ${win+2}개 데이터 필요</span>`;return}
+
+  const H=prices.map(p=>shannonEntropy(p));
+  const dH=H.map((h,i)=>i===0?0:h-H[i-1]);
+
+  // Rolling std of dH
+  const alerts=[];
+  for(let i=win;i<dH.length;i++){
+    const window_=dH.slice(i-win,i);
+    const mean=window_.reduce((a,b)=>a+b,0)/win;
+    const std=Math.sqrt(window_.reduce((a,b)=>a+(b-mean)**2,0)/win)||0.0001;
+    const sigma=Math.abs(dH[i])/std;
+    if(sigma>k){
+      alerts.push({idx:i, price:prices[i], H:H[i].toFixed(4), dH:dH[i].toFixed(4), sigma:sigma.toFixed(1)});
+    }
+  }
+
+  const entropyBars=H.map((h,i)=>{
+    const isAlert=alerts.find(a=>a.idx===i);
+    const barW=Math.round(h*100);
+    return`<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+      <span style="font-size:8px;color:${C.mu};width:16px;text-align:right">${i+1}</span>
+      <div style="flex:1;height:5px;background:var(--bd);border-radius:2px;overflow:hidden">
+        <div style="height:100%;width:${barW}%;background:${isAlert?C.rd:C.ac}88;border-radius:2px"></div>
+      </div>
+      <span style="font-size:8px;color:${isAlert?C.rd:C.mu};width:42px;text-align:right">${h.toFixed(3)}bit${isAlert?` ⚠`:''}</span>
+    </div>`;
+  }).join('');
+
+  res.innerHTML=`<div style="text-align:left">
+    <div style="font-size:9px;color:${C.mu};margin-bottom:8px">엔트로피 시계열 (${prices.length}개 포인트)</div>
+    ${entropyBars}
+    <div style="margin-top:10px;padding:8px;background:${alerts.length>0?C.rd:C.gr}18;border:1px solid ${alerts.length>0?C.rd:C.gr}44;border-radius:4px">
+      ${alerts.length>0
+        ?`<div style="color:${C.rd};font-weight:700;margin-bottom:6px">⚠ 인사이더 의심 ${alerts.length}건 감지</div>
+          ${alerts.map(a=>`<div style="font-size:9px;color:${C.rd};margin-bottom:3px">
+            #${a.idx+1}: 가격 ${(parseFloat(a.price)*100).toFixed(1)}% · H=${a.H}bit · dH=${a.dH} · <b>${a.sigma}σ</b>
+          </div>`).join('')}
+          <div style="font-size:9px;color:${C.mu};margin-top:6px;line-height:1.6">공개 뉴스와 비교하세요. 뉴스 없이 발생 → 인사이더 가능성</div>`
+        :`<div style="color:${C.gr};font-size:10px">✓ 이상 없음 — 정상 시장 움직임</div>`
+      }
+    </div>
+    <div class="g3" style="margin-top:8px">
+      ${kv("데이터",prices.length+"개")}
+      ${kv("감지임계",k+"σ")}
+      ${kv("이상건수",alerts.length+"건",alerts.length>0?C.rd:C.gr)}
+    </div>
+  </div>`;
+}
+
+/* ══════════════════════════════════════
+   EDGE TAB HELPERS
+══════════════════════════════════════ */
+let oddsFmt='d';
+function setOFmt(f,btn){
+  oddsFmt=f;
+  document.querySelectorAll('[id^="fmt-"]').forEach(b=>{b.style.background='none';b.style.color=C.mu;b.style.border=`1px solid var(--bd)`});
+  btn.style.background='var(--ac)';btn.style.color='#000';btn.style.border='none';
+  recalcOdds();
+}
+
+function addBkRow(){
+  const c=document.getElementById('bk-rows');
+  const d=document.createElement('div');
+  d.className='bk-r';d.style.cssText='display:grid;grid-template-columns:1fr 68px 68px 30px;gap:5px;margin-bottom:6px';
+  d.innerHTML=`<input class="bk-n" placeholder="Pinnacle" style="font-size:10px"><input class="bk-p1" type="number" step="0.01" placeholder="1.72" oninput="recalcOdds()" style="font-size:12px;text-align:center"><input class="bk-p2" type="number" step="0.01" placeholder="2.10" oninput="recalcOdds()" style="font-size:12px;text-align:center"><button onclick="this.closest('.bk-r').remove();recalcOdds()" class="btn-sm" style="color:${C.rd};padding:0">✕</button>`;
+  c.appendChild(d);
+}
+
+function o2p(v,fmt){
+  const n=parseFloat(v);if(!n||isNaN(n))return null;
+  if(fmt==='d')return n>1?1/n:null;
+  if(fmt==='a'){if(n>0)return 100/(n+100);if(n<0)return Math.abs(n)/(Math.abs(n)+100);return null}
+  return null;
+}
+
+let consensusP1=null;
+function recalcOdds(){
+  const rows=document.querySelectorAll('.bk-r');
+  const entries=[];
+  let bestP=0,bestName='',bestOdds=0;
+  rows.forEach(row=>{
+    const p1=o2p(row.querySelector('.bk-p1')?.value,oddsFmt);
+    const p2=o2p(row.querySelector('.bk-p2')?.value,oddsFmt);
+    const name=row.querySelector('.bk-n')?.value||'';
+    if(!p1||!p2)return;
+    const tot=p1+p2,p1n=p1/tot,margin=(tot-1)*100;
+    entries.push({name,p1n,margin});
+    if(p1n>bestP){bestP=p1n;bestName=name;bestOdds=row.querySelector('.bk-p1')?.value}
+  });
+  const res=document.getElementById('odds-res');
+  if(!entries.length){res.style.display='none';consensusP1=null;return}
+  const avg=entries.reduce((a,e)=>a+e.p1n,0)/entries.length;
+  const avgM=entries.reduce((a,e)=>a+e.margin,0)/entries.length;
+  consensusP1=avg;
+  const pm=parseFloat(document.getElementById('e-price')?.value)||null;
+  const edgePct=pm?((avg-pm)*100).toFixed(1):null;
+  const ec=edgePct>2?C.gr:edgePct>0?C.yw:C.rd;
+  res.style.display='block';
+  res.innerHTML=`<div class="g2" style="margin-bottom:8px">
+    <div>${kv("컨센서스",`<b style="color:${C.ac}">${(avg*100).toFixed(1)}%</b>`)}${kv("마켓 마진",avgM.toFixed(2)+"%")}</div>
+    <div>${kv("최고 배당",bestName||"--")}${kv("",bestOdds)}</div>
+  </div>
+  ${pm?`<div style="padding:7px;background:${ec}18;border:1px solid ${ec}44;border-radius:4px;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+    <span style="font-size:10px;color:${ec}">${edgePct>0?"폴리마켓 저평가 → BUY":"폴리마켓 고평가 → SKIP"}</span>
+    <span style="font-size:14px;font-weight:700;color:${ec}">${edgePct>0?"+":""}${edgePct}%p</span>
+  </div>`:''}
+  <button onclick="applyConsensus()" style="width:100%;padding:7px;background:${C.pu}18;border:1px solid ${C.pu}44;border-radius:3px;color:${C.pu};font-family:var(--fn);font-size:9px;letter-spacing:1px;cursor:pointer">📊 컨센서스 확률을 분석에 적용</button>`;
+}
+function applyConsensus(){if(consensusP1){document.getElementById('e-price').value=(consensusP1).toFixed(3);toast("컨센서스 확률 적용됨",C.pu)}}
+
+function addEdgeNews(){edgeNewsList.push({label:"",pT:"",pF:""});renderEdgeBayesList()}
+function renderEdgeBayesList(){
+  const c=document.getElementById('e-bayes-list');if(!c)return;
+  c.innerHTML=edgeNewsList.map((n,i)=>`
+  <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:5px;align-items:end;margin-bottom:6px">
+    <div>${i===0?`<div style="font-size:8px;color:${C.mu};margin-bottom:3px">이벤트/뉴스</div>`:''}<input value="${n.label}" oninput="edgeNewsList[${i}].label=this.value" placeholder="예: 1세트 선취"></div>
+    <div>${i===0?`<div style="font-size:8px;color:${C.mu};margin-bottom:3px">P(YES)%</div>`:''}<input type="number" value="${n.pT}" oninput="edgeNewsList[${i}].pT=this.value" placeholder="70" min="1" max="99" style="text-align:center"></div>
+    <div>${i===0?`<div style="font-size:8px;color:${C.mu};margin-bottom:3px">P(NO)%</div>`:''}<input type="number" value="${n.pF}" oninput="edgeNewsList[${i}].pF=this.value" placeholder="30" min="1" max="99" style="text-align:center"></div>
+    <div style="margin-top:${i===0?'16':'0'}px">${edgeNewsList.length>1?`<button onclick="edgeNewsList.splice(${i},1);renderEdgeBayesList()" class="btn-sm">✕</button>`:'<span style="display:block;width:28px"></span>'}</div>
+  </div>`).join('');
+}
+
+let edgeSlug='';
+function edgeSearch(val){
+  clearTimeout(window._est);
+  const sr=document.getElementById('e-sr');
+  if(!val||val.length<2){sr.style.display='none';return}
+  sr.style.display='block';sr.innerHTML=`<div style="padding:10px;text-align:center;color:${C.mu};font-size:10px">검색 중...</div>`;
+  window._est=setTimeout(async()=>{
+    try{
+      const r=await fetch(`https://gamma-api.polymarket.com/markets?active=true&limit=8&order=volume24hr&ascending=false&search=${encodeURIComponent(val)}`,{signal:AbortSignal.timeout(5000)});
+      const ms=await r.json();
+      if(!ms.length){sr.innerHTML=`<div style="padding:10px;text-align:center;color:${C.mu};font-size:10px">결과 없음</div>`;return}
+      window._srData=ms;
+      sr.innerHTML=ms.slice(0,8).map((m,i)=>{
+        const ask=parseFloat(m.bestAsk||m.outcomePrices?.[0]||0);
+        const vol=m.volume24hr?('$'+(parseFloat(m.volume24hr)/1000).toFixed(0)+'K'):'--';
+        return`<div style="padding:8px 10px;border-bottom:1px solid var(--bd);cursor:pointer" onclick="edgePick(${i})">
+          <div style="font-size:10px;color:var(--br);margin-bottom:2px">${(m.question||'').substring(0,65)}</div>
+          <div style="font-size:9px;color:${C.mu}">Yes ${(ask*100).toFixed(0)}% · Vol ${vol}</div>
+        </div>`;
+      }).join('');
+    }catch{sr.innerHTML=`<div style="padding:10px;text-align:center;color:${C.rd};font-size:10px">API 오류</div>`}
+  },400);
+}
+function edgePick(i){
+  const m=window._srData?.[i];if(!m)return;
+  const ask=parseFloat(m.bestAsk||m.outcomePrices?.[0]||0);
+  document.getElementById('e-mkt').value=m.question||'';
+  if(ask>0)document.getElementById('e-price').value=ask.toFixed(3);
+  const q=(m.question||'').toLowerCase();
+  if(q.match(/btc|eth|crypto/))document.getElementById('e-cat').value='금융/크립토';
+  else if(q.match(/election|fed|rate/))document.getElementById('e-cat').value='정치/기타';
+  else document.getElementById('e-cat').value='스포츠';
+  edgeSlug=m.slug||'';
+  document.getElementById('e-sr').style.display='none';
+  // Show liquidity
+  const sp=ask&&parseFloat(m.bestBid)?(ask-parseFloat(m.bestBid)).toFixed(3):'--';
+  const vol=parseFloat(m.volume24hr||0);
+  const lc=vol>=2000?C.gr:vol>=500?C.yw:C.rd;
+  document.getElementById('e-liq').style.display='block';
+  document.getElementById('e-liq').innerHTML=`<div style="background:var(--p2);border-radius:4px;padding:8px;font-size:10px">
+    ${kv("24h Vol",`<span style="color:${lc}">${vol>=1000?'$'+(vol/1000).toFixed(0)+'K':'$'+vol.toFixed(0)}</span>`)}
+    ${kv("Spread","$"+sp)}
+    <div style="margin-top:5px;font-size:9px;color:${vol>=2000?C.gr:C.rd}">${vol>=2000?"✓ 유동성 적정":"⚠ 유동성 부족"}</div>
+  </div>`;
+  recalcOdds();
+}
+
+function runEdge(){
+  const price=parseFloat(document.getElementById('e-price').value);
+  const bank=parseFloat(document.getElementById('e-bank').value)||bankroll;
+  const mkt=document.getElementById('e-mkt').value;
+  if(!price||price<=0||price>=1){toast("가격을 입력하세요",C.yw);return}
+  // TennisONE 컨텍스트를 베이즈 항목에 자동 반영
+  const t1ctx=getTennisOneContext();
+  if(t1ctx){
+    const p1surf=parseFloat(document.getElementById('t1-p1surf')?.value||0);
+    const p2surf=parseFloat(document.getElementById('t1-p2surf')?.value||0);
+    if(p1surf&&p2surf&&p1surf!==p2surf){
+      const advantage=p1surf>p2surf;
+      if(!edgeNewsList.find(b=>b.label&&b.label.includes('서피스'))){
+        edgeNewsList.push({
+          label:`TennisONE: P1 서피스 승률 ${p1surf}% vs P2 ${p2surf}%`,
+          pT:String(advantage?Math.round(p1surf):Math.round(100-p1surf)),
+          pF:String(advantage?Math.round(p2surf):Math.round(100-p2surf))
+        });
+      }
+    }
+    toast('🎾 TennisONE 데이터 반영됨',C.ac);
+  }
+  const calBias=getCalBias(document.getElementById('e-cat').value,null);
+  const prior=Math.min(Math.max(price*100+calBias,1),99);
+  const an=runAnalysis(price,prior,edgeNewsList,bank);
+  edgeResult={...an,mkt,calBias};
+  const{prob,log,ev,roi,kl,z,verdict,vc}=an;
+  const glow=`0 0 24px ${vc}44`;
+  const res=document.getElementById('e-result');
+  res.innerHTML=`<div class="fade">
+    <div class="sec" style="text-align:center;box-shadow:${glow}">
+      <div style="font-size:9px;letter-spacing:3px;color:${C.mu};margin-bottom:6px">${(mkt||"").substring(0,50)}</div>
+      <div class="v-badge" style="background:${vc}1a;border:1px solid ${vc};color:${vc}">${verdict}</div>
+      <div>${tag("Yes $"+price,vc)}${tag(z.l,z.c)}</div>
+    </div>
+    <div class="g2">
+      <div class="sec"><div class="stitle">베이즈</div>
+        ${kv("시작",prior.toFixed(1)+"%")}
+        ${log.map(l=>`<div class="kv" style="flex-direction:column;align-items:flex-start"><span style="font-size:10px;color:var(--br)">${l.label}</span><span style="font-size:9px;color:${C.mu}">LR=${l.lr} <span style="color:${C.yw}">${l.from}%</span>→<span style="color:${C.gr}">${l.to}%</span></span></div>`).join("")}
+        ${kv("최종",(prob*100).toFixed(1)+"%",C.ac)}
+      </div>
+      <div class="sec"><div class="stitle">EV·켈리</div>
+        ${kv("EV",(ev>0?"+":"")+ev.toFixed(4),ev>0?C.gr:C.rd)}
+        ${kv("ROI",(roi>0?"+":"")+roi.toFixed(1)+"%",ev>0?C.gr:C.rd)}
+        ${kl?`<hr style="border:none;border-top:1px solid var(--bd);margin:4px 0">
+          ${kv("베팅액","$"+kl.bet,C.br)}${kv("계약수",kl.ct+"개")}${kv("최대수익","+$"+kl.profit,C.gr)}
+        `:`<div style="font-size:10px;color:${C.rd};margin-top:5px">베팅 없음</div>`}
+      </div>
+    </div>
+    ${verdict!=='SKIP'&&kl?`<button class="btn btn-out" style="margin-top:0" onclick="saveEdgeTrade()">💾 거래 저장</button>`:''}
+  </div>`;
+}
+
+function saveEdgeTrade(){
+  if(!edgeResult)return;
+  const{prob,ev,kl,verdict,price,mkt}=edgeResult;
+  saveTrade({market:mkt||"Unknown",sport:document.getElementById('e-cat').value,
+    price,myProb:prob,ev,verdict,bet:kl?.bet||"0",slug:edgeSlug});
+  toast("거래 저장됨",C.gr);
+}
+
+/* ══════════════════════════════════════
+   TAB 3: ORACLE LIVE
+══════════════════════════════════════ */
+let oracleArticles=[], oracleQuery='';
+
+/* ═══ STATIC ORACLE CONTENT ═══ */
+const ORACLE_STATIC = [
+  {
+    date:"May 1, 2026", tag:"지정학·정치", isNote:true,
+    title:"🔴 Breaking: 멕시코 시날로아 주지사 기소",
+    summary_ko:"미국 검찰이 Rubén Rocha Moya 시날로아 주지사를 시날로아 카르텔과 협력 마약 밀수 혐의로 기소. 현직 주지사 기소는 이례적.",
+    key_insight_ko:"멕시코 카르텔 관련 폴리마켓 마켓 가격 변동 주시 필요",
+    url:"https://substack.com/@polymarket/note/c-252350330",
+    polymarket_links:[{q:"멕시코 카르텔 리더십 변화 마켓",url:"https://polymarket.com"}],
+    bayes_items:[{label:"멕시코 정치 불안 심화 (카르텔 기소)",pT:70,pF:35}]
+  },
+  {
+    date:"May 1, 2026", tag:"정치·선거", isNote:true,
+    title:"🔴 Breaking: Spencer Pratt LA 시장 확률 26% 급등",
+    summary_ko:"스펜서 프랫의 '그들은 우리와 같지 않다' 캠페인 광고가 1000만뷰 돌파. LA 시장 선거 확률 26%로 Karen Bass 추월.",
+    key_insight_ko:"바이럴 캠페인이 예측 시장을 급격히 움직이는 패턴. 기존 정치인 약세 신호.",
+    url:"https://substack.com/@polymarket/note/c-252123255",
+    polymarket_links:[{q:"LA 시장 선거 2026",url:"https://polymarket.com"}],
+    bayes_items:[{label:"Spencer Pratt 바이럴 → 비전통 후보 급부상",pT:65,pF:40}]
+  },
+  {
+    date:"Apr 8, 2026", tag:"지정학·에너지",
+    title:"PHANTOM TOLLBOOTH — 이란 휴전은 지속 불가능",
+    summary_ko:"헤지펀드 에너지 트레이더 @CRUDEOIL231: 2주 휴전은 전술적 타임아웃. 이란의 호르무즈 통행료 징수는 사우디에 실존적 위협. 호르무즈 정상화 최소 6~8주 필요, 12mb/d 생산 차질.",
+    key_insight_ko:"사우디·UAE의 이란전 참전 가능성은 낮지만(8%), 호르무즈 협상 결렬 시 에너지 가격 재폭등 가능.",
+    url:"https://news.polymarket.com/p/phantom-tollbooth",
+    polymarket_links:[
+      {q:"이란-이스라엘 전쟁 확대",url:"https://poly.market/J01TwnA"},
+      {q:"호르무즈 트래픽 50% 회복",url:"https://poly.market/ifc1frg"},
+      {q:"이란 우라늄 농축 지속",url:"https://poly.market/0OyN7eG"}
+    ],
+    bayes_items:[
+      {label:"이란 휴전 무산 가능성 (전술적 타임아웃)",pT:72,pF:35},
+      {label:"오일 가격 고공행진 지속 (호르무즈 미해결)",pT:68,pF:40},
+      {label:"사우디·UAE 이란전 직접 참전",pT:20,pF:55}
+    ]
+  },
+  {
+    date:"Apr 7, 2026", tag:"지정학",
+    title:"BANK ROLLED — 후티가 Bab al-Mandab를 아직 안 닫는 이유",
+    summary_ko:"후티는 이란의 꼭두각시가 아님. 사우디의 월 수백만 달러 지원으로 운영. 사우디가 홍해 항구 Yanbu로 7mb/d 우회 중. 후티가 Bab al-Mandab 차단 시 사우디 지원 끊김.",
+    key_insight_ko:"Bab al-Mandab 폐쇄 확률은 시장에서 과대평가됨. 사우디-후티 비공식 이해관계 지속.",
+    url:"https://news.polymarket.com/p/bank-rolled",
+    polymarket_links:[
+      {q:"후티 Bab al-Mandab 폐쇄 (4월 30일 전)",url:"https://poly.market/h8FCQ1T"},
+      {q:"후티 상선 공격 재개",url:"https://poly.market/6qgyzUL"}
+    ],
+    bayes_items:[
+      {label:"후티 Bab al-Mandab 폐쇄 확률 과대평가",pT:35,pF:65},
+      {label:"사우디-후티 비공식 협력 지속",pT:70,pF:30}
+    ]
+  },
+  {
+    date:"Mar 19, 2026", tag:"크립토·행동",
+    title:"TWEET QUANT — 일론 머스크 트윗 수 모델링",
+    summary_ko:"86주 역사적 데이터 분석. 핵심 발견: Low주 다음주 61% Low(모멘텀), 주중 페이싱으로 주간 예측 가능, DOGE·Tesla 뉴스 아웃라이어. 트윗 선물 거래량 $136k→$46.5M (342배 성장).",
+    key_insight_ko:"직전 주 트윗 수가 Low였으면 이번 주도 Low일 확률 61%. 주중 페이싱이 Hot이면 상위 구간.",
+    url:"https://news.polymarket.com/p/tweet-quant",
+    polymarket_links:[{q:"일론 머스크 주간 트윗 수 예측",url:"https://polymarket.com"}],
+    bayes_items:[
+      {label:"직전 주 Low → 이번 주도 Low (모멘텀 61%)",pT:61,pF:39},
+      {label:"주중 Hot 페이싱 → 주간 상위 구간 예측",pT:74,pF:35},
+      {label:"DOGE/Tesla 뉴스 발생 → 트윗 급증",pT:65,pF:30}
+    ]
+  },
+  {
+    date:"Mar 6, 2026", tag:"에너지",
+    title:"DOOMBERG: The Strait is Already Closed",
+    summary_ko:"에너지 분석가 Doomberg: 호르무즈는 사실상 이미 닫혔다. 이란 미사일 전쟁이 글로벌 에너지 구조를 근본 재편. 다음 도미노: 사우디 오일 인프라. 원유 $150+ 시나리오.",
+    key_insight_ko:"에너지 시장 구조적 변화로 단기 해결 불가. 글로벌 원유 재고 지속 감소.",
+    url:"https://news.polymarket.com/p/doomberg-the-strait-is-already-closed",
+    polymarket_links:[{q:"원유 가격 배럴당 $150+",url:"https://polymarket.com"}],
+    bayes_items:[
+      {label:"호르무즈 완전 차단 장기화",pT:65,pF:30},
+      {label:"사우디 오일 인프라 추가 타격",pT:45,pF:70}
+    ]
+  },
+  {
+    date:"Feb 26, 2026", tag:"정치·법",
+    title:"PLAY BY PLAY — 폴리마켓 트레이더의 대법원 관세 판결 예측",
+    summary_ko:"판결 발표 몇 분 전부터 폴리마켓 가격 이동. 샤프 머니가 정보 우위로 선행 매매. 폴리마켓이 뉴스보다 먼저 움직이는 패턴 확인.",
+    key_insight_ko:"대형 법원 판결 전 폴리마켓 가격 급변동 = 샤프 머니 신호. 드로핑 오즈와 함께 체크 필수.",
+    url:"https://news.polymarket.com/p/play-by-play",
+    polymarket_links:[{q:"트럼프 관세 대법원 합헌 판결",url:"https://polymarket.com"}],
+    bayes_items:[
+      {label:"법원 판결 전 폴리마켓 가격 선행 이동",pT:75,pF:30},
+      {label:"샤프 머니 정보 우위 감지",pT:70,pF:35}
+    ]
+  }
+];
+
+function renderOracleTab(){
+  const el_=document.getElementById('tab-oracle');
+  const breakingNotes = ORACLE_STATIC.filter(a=>a.isNote);
+  const mainPosts = ORACLE_STATIC.filter(a=>!a.isNote);
+
+  el_.innerHTML=`<div class="fade" style="padding:12px">
+
+    <!-- 헤더 -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div>
+        <div style="font-size:8px;letter-spacing:3px;color:${C.mu}">THE ORACLE BY</div>
+        <div style="font-size:14px;font-weight:700;color:var(--br)"><span style="color:${C.pu}">POLYMARKET</span> <span style="font-size:9px;color:${C.mu}">92K+ 구독자</span></div>
+      </div>
+      <a href="https://news.polymarket.com" target="_blank" style="padding:5px 10px;background:${C.pu}18;border:1px solid ${C.pu}44;border-radius:3px;color:${C.pu};text-decoration:none;font-size:9px">구독 (무료)</a>
+    </div>
+
+    <!-- Breaking Notes -->
+    <div style="background:${C.rd}0e;border:1px solid ${C.rd}44;border-radius:6px;padding:10px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+        <div class="pulse" style="background:${C.rd}"></div>
+        <span style="font-size:9px;letter-spacing:2px;color:${C.rd}">BREAKING NOTES</span>
+      </div>
+      ${breakingNotes.map((a,i)=>`
+      <div style="background:var(--p2);border-radius:4px;padding:9px;margin-bottom:7px;border-left:2px solid ${C.rd}">
+        <div style="font-size:8px;color:${C.mu};margin-bottom:4px">${a.date}</div>
+        <div style="font-size:11px;color:var(--br);font-weight:700;margin-bottom:5px">${a.title}</div>
+        <div style="font-size:10px;color:${C.tx};line-height:1.6;margin-bottom:6px">${a.summary_ko}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <button onclick="addStaticBayes(${ORACLE_STATIC.indexOf(a)})" style="padding:4px 10px;background:${C.pu}22;border:1px solid ${C.pu}44;border-radius:3px;color:${C.pu};font-family:var(--fn);font-size:9px;cursor:pointer">⟳ 베이즈 추가</button>
+          <a href="${a.url}" target="_blank" style="font-size:9px;color:${C.ac};text-decoration:none">↗ 원문</a>
+        </div>
+      </div>`).join('')}
+    </div>
+
+    <!-- 실시간 AI 검색 -->
+    <div class="sec" style="border-color:${C.pu}33;margin-bottom:10px">
+      <div class="stitle" style="color:${C.pu}">🔍 AI 실시간 검색</div>
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <input id="o-search" placeholder="검색: iran, tennis, btc, elon..." value="${oracleQuery}" onkeydown="if(event.key==='Enter')loadOracle(this.value)" style="font-size:11px">
+        <button onclick="loadOracle(document.getElementById('o-search').value)" style="padding:7px 12px;background:${C.pu};color:#000;border:none;border-radius:4px;font-family:var(--fn);font-weight:700;font-size:10px;cursor:pointer;white-space:nowrap">검색</button>
+      </div>
+      <button onclick="loadOracle('')" style="width:100%;padding:6px;background:none;border:1px dashed var(--bd);border-radius:4px;color:${C.mu};font-family:var(--fn);font-size:9px;cursor:pointer;letter-spacing:1px">🔄 최신 포스트 AI 검색</button>
+      <div id="oracle-feed" style="margin-top:8px">
+        ${oracleArticles.length?renderOracleFeed():''}
+      </div>
+    </div>
+
+    <!-- 내장 아카이브 포스트 -->
+    <div class="sec" style="border-color:${C.pu}33">
+      <div class="stitle" style="color:${C.pu}">📰 Oracle 포스트 (내장)</div>
+      ${mainPosts.map((a,gi)=>{
+        const realIdx = ORACLE_STATIC.indexOf(a);
+        return `
+        <div class="o-card" style="margin-bottom:10px;border-left:2px solid ${C.pu}44;padding-left:10px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:8px;padding:1px 6px;background:${C.pu}18;border:1px solid ${C.pu}33;border-radius:2px;color:${C.pu}">${a.tag}</span>
+            <span style="font-size:8px;color:${C.mu}">${a.date}</span>
+          </div>
+          <a href="${a.url}" target="_blank" style="display:block;font-size:12px;color:var(--br);font-weight:700;text-decoration:none;margin-bottom:3px">${a.title}</a>
+          <div style="font-size:10px;color:${C.tx};line-height:1.6;margin-bottom:6px">${a.summary_ko}</div>
+          ${a.key_insight_ko?`<div style="border-left:2px solid ${C.pu};padding:5px 8px;font-size:10px;color:${C.pu};margin-bottom:7px">💡 ${a.key_insight_ko}</div>`:''}
+          ${a.polymarket_links?.length?`<div style="margin-bottom:7px">${a.polymarket_links.map(l=>`<a href="${l.url}" target="_blank" style="display:block;font-size:9px;color:${C.ac};text-decoration:none;padding:2px 0;border-bottom:1px solid var(--bd)33">↗ ${l.q}</a>`).join('')}</div>`:''}
+          ${a.bayes_items?.length?`<div>
+            <div style="font-size:8px;color:${C.mu};letter-spacing:2px;margin-bottom:4px">⟳ 베이즈 항목</div>
+            ${a.bayes_items.map(b=>`<div class="bayes-row">
+              <span style="font-size:10px;color:var(--br);flex:1">${b.label}</span>
+              <span style="font-size:9px;color:${C.mu};margin:0 6px">LR=${(b.pT/b.pF).toFixed(1)}</span>
+              <button onclick="addBayes('${b.label.replace(/'/g,"\'")}',${b.pT},${b.pF})" class="btn-sm" style="color:${C.pu};border-color:${C.pu}44">+추가</button>
+            </div>`).join('')}
+            <button onclick="addStaticBayes(${realIdx})" style="width:100%;margin-top:4px;padding:5px;background:${C.pu}18;border:1px solid ${C.pu}44;border-radius:3px;color:${C.pu};font-family:var(--fn);font-size:9px;cursor:pointer">전체 ${a.bayes_items.length}개 추가</button>
+          </div>`:''}
+          <div style="margin-top:7px;text-align:right">
+            <a href="${a.url}" target="_blank" style="font-size:9px;color:${C.ac};text-decoration:none">↗ 전체 읽기</a>
+          </div>
+        </div>`;
+      }).join('')}
+      <a href="https://news.polymarket.com/archive" target="_blank" style="display:block;text-align:center;font-size:10px;color:${C.ac};text-decoration:none;margin-top:4px">전체 아카이브 →</a>
+    </div>
+  </div>`;
+}
+
+function addStaticBayes(idx){
+  const a=ORACLE_STATIC[idx];if(!a)return;
+  let n=0;
+  a.bayes_items?.forEach(b=>{
+    if(!pendingBayes.find(x=>x.label===b.label)){
+      pendingBayes.push({label:b.label,pT:String(b.pT),pF:String(b.pF)});n++;
+    }
+  });
+  saveAll();updateBayesBadge();
+  toast(`🔮 Oracle 베이즈 ${n}개 추가됨`,C.pu);
+}
+
+function renderOracleFeed(){
+  return oracleArticles.map((a,i)=>`
+  <div class="o-card">
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+      <span style="font-size:8px;padding:1px 6px;background:${C.pu}18;border:1px solid ${C.pu}33;border-radius:2px;color:${C.pu}">${a.tag||'Oracle'}</span>
+      <span style="font-size:8px;color:${C.mu}">${a.date||''}</span>
+    </div>
+    <a href="${a.url}" target="_blank" class="o-title" style="text-decoration:none;display:block">${a.title||''}</a>
+    <div class="o-sum">${a.summary_ko||''}</div>
+    ${a.key_insight_ko?`<div style="border-left:2px solid ${C.pu};padding:5px 9px;font-size:10px;color:${C.pu};margin-bottom:7px">💡 ${a.key_insight_ko}</div>`:''}
+    ${a.polymarket_links?.length?`<div style="margin-bottom:7px">${a.polymarket_links.map(l=>`<a href="${l.url}" target="_blank" style="display:block;font-size:9px;color:${C.ac};text-decoration:none;padding:2px 0;border-bottom:1px solid ${C.bd}33">↗ ${l.q}</a>`).join('')}</div>`:''}
+    ${a.bayes_items?.length?`<div>
+      <div style="font-size:8px;color:${C.mu};letter-spacing:2px;margin-bottom:4px">⟳ 베이즈 항목</div>
+      ${a.bayes_items.map(b=>`<div class="bayes-row">
+        <span style="font-size:10px;color:var(--br);flex:1">${b.label}</span>
+        <span style="font-size:9px;color:${C.mu};margin:0 8px">LR=${(b.pT/b.pF).toFixed(1)}</span>
+        <button onclick="addBayes('${b.label.replace(/'/g,"\\'")}',${b.pT},${b.pF})" class="btn-sm" style="color:${C.pu};border-color:${C.pu}44">+추가</button>
+      </div>`).join('')}
+      <button onclick="addAllBayes(${i})" style="width:100%;margin-top:4px;padding:5px;background:${C.pu}18;border:1px solid ${C.pu}44;border-radius:3px;color:${C.pu};font-family:var(--fn);font-size:9px;cursor:pointer">전체 ${a.bayes_items.length}개 추가</button>
+    </div>`:''}
+    <div style="margin-top:8px;display:flex;gap:5px;justify-content:flex-end">
+      <a href="${a.url}" target="_blank" class="btn-sm" style="text-decoration:none;color:${C.ac};border-color:${C.ac}33">↗ 원문</a>
+    </div>
+  </div>`).join('');
+}
+
+function addAllBayes(idx){
+  const a=oracleArticles[idx];if(!a)return;
+  let n=0;
+  a.bayes_items?.forEach(b=>{if(!pendingBayes.find(x=>x.label===b.label)){pendingBayes.push({label:b.label,pT:String(b.pT),pF:String(b.pF)});n++}});
+  saveAll();updateBayesBadge();
+  toast(`🔮 ${n}개 베이즈 항목 추가됨`,C.pu);
+}
+
+async function loadOracle(q=''){
+  oracleQuery=q;
+  const feed=document.getElementById('oracle-feed');
+  if(!feed||!getKey())return;
+  feed.innerHTML=`<div style="text-align:center;padding:24px"><div class="spin"></div><div style="font-size:10px;color:${C.pu};margin-top:10px">Oracle 포스트 로딩 중...</div></div>`;
+  try{
+    const articles=await fetchOracle(q);
+    oracleArticles=articles;
+    feed.innerHTML=articles.length?renderOracleFeed():`<div class="sec" style="text-align:center"><div style="font-size:11px;color:${C.mu}">포스트를 찾지 못했습니다</div></div>`;
+  }catch(e){
+    feed.innerHTML=`<div class="sec" style="border-color:${C.rd}44"><div style="font-size:10px;color:${C.rd}">오류: ${e.message}</div></div>`;
+  }
+}
+
+/* ══════════════════════════════════════
+   TAB 4: LOG
+══════════════════════════════════════ */
+function renderLog(){
+  const res=trades.filter(t=>t.outcome);
+  const wins=res.filter(t=>t.outcome==="WIN").length;
+  const pnl=res.reduce((a,t)=>a+(t.pnl||0),0);
+  let h=`<div class="fade" style="padding:12px">
+    <div class="g4" style="margin-bottom:10px">
+      <div class="stat-b"><div class="sv" style="color:var(--br)">${trades.length}</div><div class="sl">총</div></div>
+      <div class="stat-b"><div class="sv" style="color:${C.gr}">${wins}</div><div class="sl">승리</div></div>
+      <div class="stat-b"><div class="sv" style="color:${wins>res.length*0.55?C.gr:wins>res.length*0.45?C.yw:C.rd}">${res.length?Math.round(wins/res.length*100)+"%":"--"}</div><div class="sl">승률</div></div>
+      <div class="stat-b"><div class="sv" style="color:${pnl>=0?C.gr:C.rd}">${pnl>=0?"+":""}${pnl.toFixed(0)}</div><div class="sl">PnL($)</div></div>
+    </div>`;
+  if(!trades.length){h+=`<div class="sec" style="text-align:center;padding:28px"><div style="font-size:24px;margin-bottom:8px">📋</div><div style="font-size:11px;color:${C.mu}">저장된 기록 없음</div></div>`}
+  else trades.forEach(t=>{
+    const cls=t.outcome==="WIN"?"win":t.outcome==="LOSS"?"loss":"";
+    const dt=new Date(t.ts).toLocaleString("ko-KR",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
+    const pStr=t.pnl!=null?`<b style="color:${t.pnl>=0?C.gr:C.rd}">${t.pnl>=0?"+":""}$${Math.abs(t.pnl)}</b>`:'';
+    const btns=t.outcome?`<span style="color:${t.outcome==="WIN"?C.gr:C.rd};font-size:10px;font-weight:700">${t.outcome}</span> ${pStr}`
+      :`<div style="display:flex;gap:4px"><button class="btn-win" onclick="markOutcome(${t.id},true)">WIN</button><button class="btn-loss" onclick="markOutcome(${t.id},false)">LOSS</button></div>`;
+    h+=`<div class="trade-card ${cls}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px">
+        <div style="flex:1;min-width:0"><div style="font-size:11px;color:var(--br);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.market||"(없음)"}</div>
+          <div style="font-size:9px;color:${C.mu};margin-top:1px">${t.sport||""} · $${t.price||"--"} · ${t.myProb?(t.myProb*100).toFixed(1)+"%":"--"}</div></div>
+        <button onclick="delTrade(${t.id})" class="btn-sm" style="margin-left:6px;flex-shrink:0">✕</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        ${btns}
+        <span style="font-size:8px;color:${C.mu}">${dt}</span>
+      </div>
+    </div>`;
+  });
+  h+=`</div>`;
+  document.getElementById('tab-log').innerHTML=h;
+}
+
+/* ══════════════════════════════════════
+   TAB 5: CALIBRATION
+══════════════════════════════════════ */
+function renderCalTab(){
+  const entries=Object.entries(cal);
+  let h=`<div class="fade" style="padding:12px">
+    <div class="sec"><div class="stitle">예측 보정 현황</div>
+    ${!entries.length?`<div style="font-size:11px;color:${C.mu};text-align:center;padding:16px">WIN/LOSS 5건 이상 입력 시 자동 보정 시작</div>`:
+    entries.map(([key,d])=>{
+      const parts=key.split("_"),sport=parts[0],surf=parts[1]==="any"?"전체":parts[1];
+      const expWR=(d.sumProb/d.total*100).toFixed(1),actWR=(d.wins/d.total*100).toFixed(1);
+      const bias=((d.wins/d.total)-(d.sumProb/d.total))*100;
+      const bc=Math.abs(bias)<2?C.mu:bias>0?C.gr:C.rd;
+      return`<div style="background:var(--p2);border-radius:4px;padding:10px;margin-bottom:7px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <b style="font-size:11px;color:var(--br)">${sport}·${surf}</b>
+          <span style="font-size:9px;color:${C.mu}">${d.total}건 ${d.total<5?`(${5-d.total}건 더 필요)`:'✓'}</span>
+        </div>
+        <div class="g3">${kv("예측",expWR+"%")}${kv("실제",actWR+"%",parseFloat(actWR)>parseFloat(expWR)?C.gr:C.rd)}${kv("보정",(bias>0?"+":"")+bias.toFixed(1)+"%p",bc)}</div>
+        <div style="font-size:9px;color:${bc};margin-top:4px">${Math.abs(bias)<2?"✓ 보정 불필요":bias>0?`↑ +${bias.toFixed(1)}%p 상향 적용 중`:`↓ ${bias.toFixed(1)}%p 하향 적용 중`}</div>
+      </div>`;
+    }).join("")}
+    </div>
+
+    <!-- Pending Bayes -->
+    ${pendingBayes.length?`<div class="sec" style="border-color:${C.pu}44">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="stitle" style="margin:0;color:${C.pu}">⟳ Oracle 베이즈 대기</div>
+        <button onclick="clearBayes();renderCalTab()" class="btn-sm" style="color:${C.rd};border-color:${C.rd}33">전체삭제</button>
+      </div>
+      ${pendingBayes.map((b,i)=>`<div class="bayes-row"><div style="flex:1"><div style="font-size:10px;color:var(--br)">${b.label}</div><div style="font-size:9px;color:${C.mu}">P(YES)=${b.pT}% · P(NO)=${b.pF}% · LR=${(b.pT/b.pF).toFixed(2)}</div></div><button onclick="pendingBayes.splice(${i},1);saveAll();updateBayesBadge();renderCalTab()" style="background:none;border:none;color:${C.mu};cursor:pointer;font-family:var(--fn)">✕</button></div>`).join('')}
+    </div>`:''}
+
+    <!-- Settings -->
+    <div class="sec">
+      <div class="stitle">⚙️ 설정</div>
+      <div style="font-size:9px;color:${C.mu};margin-bottom:3px">Claude API Key</div>
+      <div style="display:flex;gap:6px;margin-bottom:4px">
+        <input type="password" id="cfg-key" value="${getKey()}" placeholder="sk-ant-..." style="font-size:11px">
+        <button onclick="saveKeyCfg()" style="padding:7px 12px;background:${C.ac};color:#000;border:none;border-radius:4px;font-family:var(--fn);font-weight:700;font-size:10px;cursor:pointer;white-space:nowrap">저장</button>
+      </div>
+      <div id="cfg-st" style="font-size:9px;color:${getKey()?C.gr:C.rd};margin-bottom:8px">${getKey()?'✓ 설정됨':'⚠ 미설정'}</div>
+      <div style="font-size:9px;color:${C.mu};margin-bottom:3px">잔고 (USDC)</div>
+      <input type="number" value="${bankroll}" onchange="bankroll=+this.value;LS.rawSet('pm-bank',bankroll)" style="max-width:120px;text-align:center">
+    </div>
+  </div>`;
+  document.getElementById('tab-cal').innerHTML=h;
+}
+function saveKeyCfg(){
+  const v=document.getElementById('cfg-key')?.value.trim();
+  if(v){LS.rawSet('pm-apikey',v);document.getElementById('cfg-st').textContent='✓ 저장됨';document.getElementById('cfg-st').style.color=C.gr;toast("API 키 저장됨",C.gr)}
+}
+
+/* ══════════════════════════════════════
+   PWA
+══════════════════════════════════════ */
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('inst').style.display='flex'});
+function doInstall(){if(!deferredPrompt)return;deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;document.getElementById('inst').style.display='none'})}
+
+/* ═══ TENNISONE CONTEXT ═══ */
+function updateTennisContext(){
+  const p1form=document.getElementById('t1-p1form')?.value;
+  const p2form=document.getElementById('t1-p2form')?.value;
+  const p1surf=document.getElementById('t1-p1surf')?.value;
+  const p2surf=document.getElementById('t1-p2surf')?.value;
+  const h2h=document.getElementById('t1-h2h')?.value;
+  const score=document.getElementById('t1-score')?.value;
+  const note=document.getElementById('t1-note')?.value;
+  const preview=document.getElementById('t1-preview');
+  if(!preview)return;
+  const lines=[];
+  if(p1form)lines.push(`P1 최근폼: ${p1form}`);
+  if(p2form)lines.push(`P2 최근폼: ${p2form}`);
+  if(p1surf)lines.push(`P1 서피스 승률: ${p1surf}%`);
+  if(p2surf)lines.push(`P2 서피스 승률: ${p2surf}%`);
+  if(h2h)lines.push(`H2H: ${h2h}`);
+  if(score)lines.push(`현재 스코어: ${score}`);
+  if(note)lines.push(`메모: ${note}`);
+  if(lines.length){
+    preview.style.display='block';
+    preview.textContent='📊 TennisONE 데이터:\n'+lines.join(' | ');
+    window._tennisOneContext=lines.join('\n');
+  } else {
+    preview.style.display='none';
+    window._tennisOneContext='';
+  }
+}
+
+function getTennisOneContext(){return window._tennisOneContext||''}
+
+/* ═══ TENNIS LIVE TAB ═══ */
+function renderTennisTab(){
+  const el=document.getElementById('tab-tennis');
+  el.innerHTML=`<div class="fade" style="padding:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div>
+        <div style="font-size:8px;letter-spacing:3px;color:${C.mu}">LIVE TENNIS</div>
+        <div style="font-size:14px;font-weight:700;color:var(--br)">🎾 <span style="color:${C.ac}">TENNIS</span> LIVE</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <a href="https://www.tennis.one" target="_blank" style="padding:5px 9px;background:${C.ac}18;border:1px solid ${C.ac}44;border-radius:3px;color:${C.ac};text-decoration:none;font-size:9px">TennisONE</a>
+        <a href="https://www.atptour.com/en/scores/current" target="_blank" style="padding:5px 9px;background:${C.ac}18;border:1px solid ${C.ac}44;border-radius:3px;color:${C.ac};text-decoration:none;font-size:9px">ATP</a>
+      </div>
+    </div>
+
+    <!-- 실시간 스코어 -->
+    <div class="sec" style="border-color:${C.ac}44">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="stitle" style="margin:0;color:${C.ac}">⚡ 실시간 스코어</div>
+        <button onclick="fetchTennisLive()" id="tennis-live-btn" style="padding:5px 12px;background:${C.ac};color:#000;border:none;border-radius:3px;font-family:var(--fn);font-weight:700;font-size:10px;cursor:pointer">불러오기</button>
+      </div>
+      <div id="tennis-live-result" style="font-size:10px;color:${C.mu};text-align:center;padding:12px">
+        버튼을 눌러 실시간 스코어를 불러오세요
+      </div>
+    </div>
+
+    <!-- 선수 검색 -->
+    <div class="sec">
+      <div class="stitle">🔍 선수 분석</div>
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <input id="player-search" placeholder="선수 이름 검색... (Sinner, Swiatek...)" style="font-size:11px" onkeydown="if(event.key==='Enter')fetchPlayerInfo(this.value)">
+        <button onclick="fetchPlayerInfo(document.getElementById('player-search').value)" style="padding:7px 12px;background:${C.ac};color:#000;border:none;border-radius:4px;font-family:var(--fn);font-weight:700;font-size:10px;cursor:pointer;white-space:nowrap">검색</button>
+      </div>
+      <div id="player-result" style="font-size:10px;color:${C.mu}"></div>
+    </div>
+
+    <!-- 토너먼트 분석 -->
+    <div class="sec">
+      <div class="stitle">🏆 현재 토너먼트</div>
+      <div style="background:var(--p2);border-radius:4px;padding:10px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+          <div style="font-size:12px;color:var(--br);font-weight:700">🇮🇹 Rome Masters</div>
+          <span style="font-size:8px;padding:2px 6px;background:${C.gr}22;border:1px solid ${C.gr}44;color:${C.gr};border-radius:3px">진행 중</span>
+        </div>
+        <div style="font-size:9px;color:${C.mu}">May 5~18, 2026 · Red Clay · Rome, Italy</div>
+        <div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap">
+          <a href="https://www.atptour.com/en/tournaments/rome/416/overview" target="_blank" style="padding:4px 8px;background:${C.ac}0e;border:1px solid ${C.ac}2a;border-radius:3px;font-size:9px;color:${C.ac};text-decoration:none">ATP 드로우</a>
+          <a href="https://www.wtatennis.com/tournaments/1996/rome/2026" target="_blank" style="padding:4px 8px;background:${C.ac}0e;border:1px solid ${C.ac}2a;border-radius:3px;font-size:9px;color:${C.ac};text-decoration:none">WTA 드로우</a>
+          <a href="https://www.tennis.one/tournament" target="_blank" style="padding:4px 8px;background:${C.ac}0e;border:1px solid ${C.ac}2a;border-radius:3px;font-size:9px;color:${C.ac};text-decoration:none">TennisONE</a>
+        </div>
+      </div>
+      <div style="background:var(--p2);border-radius:4px;padding:10px">
+        <div style="font-size:11px;color:var(--br);font-weight:700;margin-bottom:4px">🏆 Roland Garros</div>
+        <div style="font-size:9px;color:${C.mu}">May 25 ~ Jun 8, 2026 · Red Clay · Paris</div>
+        <button onclick="fetchTournamentInfo('Roland Garros 2026 favorites odds players')" style="margin-top:7px;padding:4px 10px;background:${C.yw}18;border:1px solid ${C.yw}44;border-radius:3px;color:${C.yw};font-family:var(--fn);font-size:9px;cursor:pointer">🔍 우승 후보 분석</button>
+      </div>
+    </div>
+
+    <!-- ATP/WTA 랭킹 -->
+    <div class="sec">
+      <div class="stitle">📊 최신 랭킹</div>
+      <div class="g2" style="margin-bottom:8px">
+        <div>
+          <div style="font-size:9px;color:${C.mu};letter-spacing:1px;margin-bottom:6px">ATP TOP 5</div>
+          ${[["1","🇮🇹 Sinner","14,350","clay:92%"],["2","🇪🇸 Alcaraz ⚠️손목","12,960","clay:88%"],["3","🇩🇪 Zverev","6,155","clay:82%"],["4","🇷🇸 Djokovic ⚠️어깨","4,700","clay:88%"],["5","🇷🇺 Medvedev","4,120","clay:74%"]].map(([n,p,pts,surf])=>`
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bd);font-size:10px">
+            <div><span style="color:${C.ac};font-weight:700;margin-right:6px">${n}</span><span style="color:var(--br)">${p}</span></div>
+            <span style="color:${C.mu};font-size:9px">${surf}</span>
+          </div>`).join('')}
+        </div>
+        <div>
+          <div style="font-size:9px;color:${C.mu};letter-spacing:1px;margin-bottom:6px">WTA TOP 5</div>
+          ${[["1","🇵🇱 Swiatek","9,851","clay:94%"],["2","🇧🇾 Sabalenka","8,775","clay:84%"],["3","🇺🇸 Gauff","6,230","clay:80%"],["4","🇷🇺 Andreeva","4,150","clay:82%"],["5","🇨🇿 Muchova","3,890","clay:79%"]].map(([n,p,pts,surf])=>`
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bd);font-size:10px">
+            <div><span style="color:${C.pu};font-weight:700;margin-right:6px">${n}</span><span style="color:var(--br)">${p}</span></div>
+            <span style="color:${C.mu};font-size:9px">${surf}</span>
+          </div>`).join('')}
+        </div>
+      </div>
+      <button onclick="fetchTennisRankings()" style="width:100%;padding:7px;background:${C.ac}12;border:1px solid ${C.ac}33;border-radius:4px;color:${C.ac};font-family:var(--fn);font-size:9px;cursor:pointer;letter-spacing:1px">🔄 최신 랭킹 AI 업데이트</button>
+      <div id="ranking-result" style="margin-top:8px"></div>
+    </div>
+
+    <!-- Polymarket 테니스 마켓 -->
+    <div class="sec">
+      <div class="stitle">📊 관련 폴리마켓</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px">
+        <a href="https://polymarket.com/sports/tennis" target="_blank" style="padding:5px 9px;background:${C.ac}0e;border:1px solid ${C.ac}2a;border-radius:3px;font-size:9px;color:${C.ac};text-decoration:none">테니스 마켓</a>
+        <a href="https://www.flashscore.com/tennis/" target="_blank" style="padding:5px 9px;background:${C.ac}0e;border:1px solid ${C.ac}2a;border-radius:3px;font-size:9px;color:${C.ac};text-decoration:none">⚡ Flashscore</a>
+        <a href="https://www.oddsportal.com/tennis/" target="_blank" style="padding:5px 9px;background:${C.ac}0e;border:1px solid ${C.ac}2a;border-radius:3px;font-size:9px;color:${C.ac};text-decoration:none">📊 OddsPortal</a>
+        <a href="https://www.oddsportal.com/dropping-odds/#tennis" target="_blank" style="padding:5px 9px;background:${C.yw}0e;border:1px solid ${C.yw}2a;border-radius:3px;font-size:9px;color:${C.yw};text-decoration:none">📉 드로핑오즈</a>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function fetchTennisLive(){
+  if(!getKey()){toast("API 키 필요",C.rd);return}
+  const btn=document.getElementById('tennis-live-btn');
+  const res=document.getElementById('tennis-live-result');
+  btn.textContent='로딩...';btn.disabled=true;
+  try{
+    const d=await claude([{role:"user",content:"Search for current live tennis scores today May 2026, especially Rome Masters ATP WTA results and live matches. Format as a concise Korean summary with player names, sets scores, and match status."}],
+      [{type:"web_search_20250305",name:"web_search"}],1000);
+    const text=d.content?.filter(c=>c.type==="text").map(c=>c.text).join("")||"결과 없음";
+    res.innerHTML=`<div style="font-size:10px;color:var(--br);line-height:1.8;background:var(--p2);border-radius:4px;padding:10px;white-space:pre-line">${text.substring(0,800)}</div>`;
+  }catch(e){
+    res.innerHTML=`<div style="color:${C.rd};font-size:10px">오류: ${e.message}</div>`;
+  }finally{btn.textContent='새로고침';btn.disabled=false;}
+}
+
+async function fetchPlayerInfo(name){
+  if(!name){toast("선수 이름을 입력하세요",C.yw);return}
+  if(!getKey()){toast("API 키 필요",C.rd);return}
+  const res=document.getElementById('player-result');
+  res.innerHTML=`<div style="text-align:center;padding:10px"><div class="spin"></div></div>`;
+  try{
+    const d=await claude([{role:"user",content:`Search for tennis player ${name} current 2026 stats: ranking, recent match results, clay court win rate, upcoming matches, injuries. Provide concise Korean summary.`}],
+      [{type:"web_search_20250305",name:"web_search"}],800);
+    const text=d.content?.filter(c=>c.type==="text").map(c=>c.text).join("")||"";
+    res.innerHTML=`<div style="background:var(--p2);border-radius:4px;padding:10px;font-size:10px;color:var(--br);line-height:1.7;white-space:pre-line">${text.substring(0,600)}</div>
+    <button onclick="applyPlayerToBayes('${name.replace(/'/g,"\'")}','${text.substring(0,100).replace(/'/g,"\'")}') " style="margin-top:6px;width:100%;padding:6px;background:${C.ac}18;border:1px solid ${C.ac}33;border-radius:3px;color:${C.ac};font-family:var(--fn);font-size:9px;cursor:pointer">📊 분석에 적용</button>`;
+  }catch(e){
+    res.innerHTML=`<div style="color:${C.rd};font-size:10px">오류: ${e.message}</div>`;
+  }
+}
+
+async function fetchTournamentInfo(query){
+  if(!getKey()){toast("API 키 필요",C.rd);return}
+  const d=await claude([{role:"user",content:`Search for ${query}. Provide Korean summary of top contenders and Polymarket odds if available.`}],
+    [{type:"web_search_20250305",name:"web_search"}],800);
+  const text=d.content?.filter(c=>c.type==="text").map(c=>c.text).join("")||"";
+  toast("토너먼트 분석 완료",C.ac);
+  document.getElementById('tennis-live-result').innerHTML=`<div style="background:var(--p2);border-radius:4px;padding:10px;font-size:10px;color:var(--br);line-height:1.7">${text.substring(0,600)}</div>`;
+  go('tennis',document.querySelector('.nav-btn:nth-child(4)'));
+}
+
+async function fetchTennisRankings(){
+  if(!getKey()){toast("API 키 필요",C.rd);return}
+  const res=document.getElementById('ranking-result');
+  res.innerHTML=`<div class="spin" style="margin:8px auto"></div>`;
+  const d=await claude([{role:"user",content:"Search for current ATP WTA tennis rankings May 2026. Top 10 each. Korean format."}],
+    [{type:"web_search_20250305",name:"web_search"}],600);
+  const text=d.content?.filter(c=>c.type==="text").map(c=>c.text).join("")||"";
+  res.innerHTML=`<div style="background:var(--p2);border-radius:4px;padding:9px;font-size:10px;color:var(--br);line-height:1.7;white-space:pre-line">${text.substring(0,500)}</div>`;
+}
+
+function applyPlayerToBayes(name,info){
+  toast(`🎾 ${name} 정보를 베이즈 탭으로 이동하세요`,C.ac);
+}
+
+/* ══════════════════════════════════════
+   TAB 7: WEATHER BOT (zostaff strategy)
+══════════════════════════════════════ */
+
+// 11-bin edges for Polymarket temperature markets (°F)
+// User can override per city
+let wState = {
+  city:'', date:'', gfsMean:'', gfsStd:'', gfsRange:'',
+  ecmwfMean:'', ecmwfStd:'', iconMean:'', iconStd:'',
+  nwsText:'', climMean:'', climStd:'',
+  yestHigh:'', yestForecast:'', biasPp:'0',
+  binEdges:[50,55,60,65,70,75,80,85,90,95,100,105],
+  marketPrices:[], forecast:null, binProbs:[], edges:[],
+  resolveTime:'', cityBias:0
+};
+
+// Paruchh 검증 좌표 DB — Polymarket 해상도 기상관측소 기준
+const WEATHER_CITIES = {
+  "NYC":       {lat:40.7772, lon:-73.8726, station:"KLGA",  note:"LaGuardia (NOT 맨해튼)", unit:"F", bias:0},
+  "Atlanta":   {lat:33.6407, lon:-84.4277, station:"KATL",  note:"Hartsfield 공항", unit:"F", bias:0},
+  "Miami":     {lat:25.7959, lon:-80.2870, station:"KMIA",  note:"Miami 국제공항", unit:"F", bias:0},
+  "Chicago":   {lat:41.9742, lon:-87.9073, station:"KORD",  note:"O'Hare (NOT 다운타운)", unit:"F", bias:0},
+  "Dallas":    {lat:32.8471, lon:-96.8518, station:"KDAL",  note:"Love Field", unit:"F", bias:0},
+  "Tokyo":     {lat:35.5494, lon:139.7798, station:"RJTT",  note:"하네다 (NOT 나리타 60km)", unit:"C", bias:0},
+  "HongKong":  {lat:22.3022, lon:114.1742, station:"HKO",   note:"관측소 (NOT 공항)", unit:"C", bias:1.0},
+  "Singapore": {lat:1.3502,  lon:103.9940, station:"WSSS",  note:"창이공항", unit:"C", bias:0},
+  "Seoul":     {lat:37.4691, lon:126.4505, station:"RKSI",  note:"인천 (NOT 서울 도심 50km)", unit:"C", bias:0},
+  "London":    {lat:51.5048, lon:0.0495,   station:"EGLC",  note:"London City", unit:"C", bias:0},
+  "Paris":     {lat:48.9694, lon:2.4414,   station:"LFPB",  note:"Le Bourget (NOT CDG)", unit:"C", bias:0},
+};
+
+function gaussianCDF(x, mean, std){
+  // Approximation of normal CDF
+  const z=(x-mean)/(std*Math.SQRT2);
+  return 0.5*(1+erf(z));
+}
+function erf(x){
+  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  const sign=x<0?-1:1; x=Math.abs(x);
+  const t=1/(1+p*x);
+  const y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+  return sign*y;
+}
+
+function forecastToBinProbs(mean, std, edges){
+  const probs=[];
+  for(let i=0;i<edges.length-1;i++){
+    const p=gaussianCDF(edges[i+1],mean,std)-gaussianCDF(edges[i],mean,std);
+    probs.push(Math.max(0,p));
+  }
+  const sum=probs.reduce((a,b)=>a+b,0)||1;
+  return probs.map(p=>p/sum);
+}
+
+function kellyFraction(modelP, marketP, frac=0.25){
+  if(marketP<=0||marketP>=modelP)return 0;
+  const b=(1-marketP)/marketP;
+  const q=1-modelP;
+  const fk=(b*modelP-q)/b;
+  return Math.max(0,fk*frac);
+}
+
+function selectTrades(modelProbs, marketProbs, modelStd, baseStd=8){
+  const core=[], hedges=[];
+  const highUnc = modelStd > baseStd * 0.95;
+  for(let i=0;i<modelProbs.length;i++){
+    const edgePp=(modelProbs[i]-marketProbs[i])*100;
+    if(edgePp>10){
+      core.push({bin:i, edgePp:edgePp.toFixed(1), kelly:kellyFraction(modelProbs[i],marketProbs[i])});
+    } else if(highUnc && marketProbs[i]<0.05 && modelProbs[i]>0.03){
+      hedges.push({bin:i, edgePp:edgePp.toFixed(1), stake:0.05, type:'tail'});
+    }
+  }
+  if(highUnc){
+    [0, modelProbs.length-1].forEach(i=>{
+      if(marketProbs[i]<0.05 && !hedges.find(h=>h.bin===i)){
+        hedges.push({bin:i, edgePp:((modelProbs[i]-marketProbs[i])*100).toFixed(1), stake:0.025, type:'extreme'});
+      }
+    });
+  }
+  return {core, hedges, highUnc};
+}
+
+function calcSniper(){
+  const mkt=parseFloat(document.getElementById('sniper-mkt')?.value);
+  const model=parseFloat(document.getElementById('sniper-model')?.value)/100;
+  const bet=parseFloat(document.getElementById('sniper-bet')?.value)||25;
+  const res=document.getElementById('sniper-result');
+  if(!res)return;
+  if(isNaN(mkt)||isNaN(model)||mkt<=0||model<=0){res.innerHTML=`<span style="color:var(--mu)">값 입력 시 계산</span>`;return}
+
+  const payout=bet/mkt;          // 계약수 × $1
+  const profit=payout-bet;       // 순수익
+  const roi=((profit/bet)*100);
+  const ev=model*(1-mkt)-(1-model)*mkt;
+  const kl=klDivBinary(model,mkt);
+  const multiplier=(payout/bet).toFixed(0);
+
+  const isSniperZone=mkt<=0.05;
+  const hasEdge=ev>0&&kl>=0.05;
+  const verdict=!hasEdge?'SKIP':isSniperZone?'SNIPER':'BUY';
+  const vc=verdict==='SNIPER'?C.pu:verdict==='BUY'?C.gr:C.rd;
+
+  res.innerHTML=`<div style="text-align:left">
+    <div style="text-align:center;margin-bottom:10px">
+      <div style="font-size:22px;font-weight:700;color:${vc}">${verdict}</div>
+      <div style="font-size:9px;color:${C.mu};margin-top:2px">${isSniperZone?'꼬리빈 스나이퍼 구간 (≤5¢)':'일반 구간'} · KL=${kl.toFixed(4)}bit</div>
+    </div>
+    <div class="g3" style="margin-bottom:8px">
+      <div class="stat-b"><div class="sv" style="color:${C.ac};font-size:16px">×${multiplier}</div><div class="sl">배율</div></div>
+      <div class="stat-b"><div class="sv" style="color:${C.gr};font-size:16px">+$${profit.toFixed(0)}</div><div class="sl">순수익</div></div>
+      <div class="stat-b"><div class="sv" style="color:${ev>0?C.gr:C.rd};font-size:14px">${roi.toFixed(0)}%</div><div class="sl">ROI</div></div>
+    </div>
+    <div class="g2">
+      ${kv("EV",(ev>0?"+":"")+ev.toFixed(4),ev>0?C.gr:C.rd)}
+      ${kv("베팅액","$"+bet+" → $"+payout.toFixed(0),C.br)}
+    </div>
+    ${isSniperZone&&hasEdge?`<div style="margin-top:8px;padding:7px;background:${C.pu}18;border:1px solid ${C.pu}44;border-radius:4px;font-size:9px;color:${C.pu};line-height:1.6">
+      🎯 ColdMath 스타일 진입 조건 충족<br>
+      모델이 시장보다 유의하게 높게 평가 → 극단 구간 기회
+    </div>`:''}
+  </div>`;
+}
+
+function selectWeatherCity(name){
+  const c=WEATHER_CITIES[name];if(!c)return;
+  wState.city=name; wState.cityBias=c.bias||0;
+  renderWeatherTab();
+  toast(`${name} 로드됨 · ${c.station}`,C.ac);
+}
+
+function checkEntryWindow(){
+  const rt=document.getElementById('w-resolve-time')?.value;
+  const res=document.getElementById('w-window-res');
+  if(!rt||!res)return;
+  const resolveMs=new Date(rt).getTime();
+  const nowMs=Date.now();
+  const hoursUntil=(resolveMs-nowMs)/3600000;
+  const inWindow=hoursUntil>=18&&hoursUntil<=30;
+  const color=inWindow?C.gr:hoursUntil<18?C.rd:C.yw;
+  res.innerHTML=`<div style="padding:7px;background:${color}18;border:1px solid ${color}44;border-radius:4px;font-size:10px;color:${color}">
+    ${inWindow?'✅ 진입 윈도우 내 (18~30h)':hoursUntil<18?`❌ 너무 늦음 — 이미 가격 반영됨 (${hoursUntil.toFixed(1)}h 남음)`:
+    `⚠ 아직 이름 (${hoursUntil.toFixed(1)}h 남음 — 30h 이내에 재확인)`}
+  </div>`;
+}
+
+function calc3ModelConsensus(){
+  const gfs=parseFloat(document.getElementById('w-gfs-m')?.value);
+  const ecmwf=parseFloat(document.getElementById('w-ecmwf-m')?.value);
+  const icon=parseFloat(document.getElementById('w-icon-m')?.value);
+  const res=document.getElementById('w-consensus-res');
+  if(!res)return;
+  const vals=[gfs,ecmwf,icon].filter(v=>!isNaN(v));
+  if(vals.length<2){res.innerHTML='';return}
+  const spread=Math.max(...vals)-Math.min(...vals);
+  const agree=spread<=3;
+  const center=vals.reduce((a,b)=>a+b,0)/vals.length;
+  // Find closest pair
+  const pairs=[{a:gfs,b:ecmwf,n:'GFS-ECMWF'},{a:gfs,b:icon,n:'GFS-ICON'},{a:ecmwf,b:icon,n:'ECMWF-ICON'}].filter(p=>!isNaN(p.a)&&!isNaN(p.b));
+  const closest=pairs.sort((a,b)=>Math.abs(a.a-a.b)-Math.abs(b.a-b.b))[0];
+  const outlierVal=vals.length===3?[gfs,ecmwf,icon].find(v=>v!==closest.a&&v!==closest.b):null;
+  const bias=parseFloat(wState.cityBias)||0;
+  const adjCenter=center+bias;
+  res.innerHTML=`<div style="padding:8px;background:${agree?C.gr:C.rd}18;border:1px solid ${agree?C.gr:C.rd}44;border-radius:4px">
+    <div style="font-size:10px;color:${agree?C.gr:C.rd};font-weight:700;margin-bottom:6px">${agree?`✅ 모델 합의 (spread ${spread.toFixed(1)}°C)`:`❌ SKIP — 모델 분산 ${spread.toFixed(1)}°C > 3°C`}</div>
+    <div class="g3">
+      ${kv("중심값",center.toFixed(1)+"°")}
+      ${bias?kv("도시보정",`+${bias}° → ${adjCenter.toFixed(1)}°`,C.yw):kv("Spread",spread.toFixed(1)+"°")}
+      ${closest?kv("근접쌍",closest.n):''}
+    </div>
+    ${outlierVal!=null?`<div style="font-size:9px;color:${C.mu};margin-top:4px">아웃라이어: ${outlierVal.toFixed(1)}° (3개 모두 있을 때만)</div>`:''}
+    ${agree?`<button onclick="document.getElementById('w-gfs-m').value='${adjCenter.toFixed(1)}';wState.gfsMean='${adjCenter.toFixed(1)}';toast('중심값 적용됨',C.ac)" style="margin-top:6px;width:100%;padding:5px;background:${C.ac}18;border:1px solid ${C.ac}44;border-radius:3px;color:${C.ac};font-family:var(--fn);font-size:9px;cursor:pointer">↳ 중심값 GFS에 적용</button>`:''}
+  </div>`;
+}
+
+function check3BinFilter(){
+  const inputs=Array.from(document.querySelectorAll('.w3-bin-price'));
+  const prices=inputs.map(i=>parseFloat(i.value)).filter(v=>!isNaN(v)&&v>0);
+  const res=document.getElementById('w3-filter-res');
+  if(!res||prices.length===0)return;
+  const sum=prices.reduce((a,b)=>a+b,0);
+  const anyTooLow=prices.some(p=>p<0.01);
+  const anyTooHigh=prices.some(p=>p>0.45);
+  const mathEdge=sum<=0.95;
+  const pass=mathEdge&&!anyTooLow&&!anyTooHigh;
+  const checks=[
+    {label:`합계 ≤ 0.95 (수학적 엣지)`, val:`${sum.toFixed(3)}`, ok:mathEdge},
+    {label:`최저가 ≥ 0.01 (미결 구간)`, val:prices.length?`min ${Math.min(...prices).toFixed(3)}`:'--', ok:!anyTooLow},
+    {label:`최고가 ≤ 0.45 (과열 방지)`, val:prices.length?`max ${Math.max(...prices).toFixed(3)}`:'--', ok:!anyTooHigh},
+  ];
+  res.innerHTML=`<div style="padding:8px;background:${pass?C.gr:C.rd}18;border:1px solid ${pass?C.gr:C.rd}44;border-radius:4px">
+    <div style="font-size:10px;color:${pass?C.gr:C.rd};font-weight:700;margin-bottom:7px">${pass?'✅ 3-빈 필터 통과 — 진입 가능':'❌ 필터 실패 — 트레이드 SKIP'}</div>
+    ${checks.map(c=>`<div style="display:flex;justify-content:space-between;font-size:9px;padding:3px 0;border-bottom:1px solid var(--bd)55">
+      <span style="color:${c.ok?C.gr:C.rd}">${c.ok?'✓':'✗'} ${c.label}</span>
+      <span style="color:${C.mu}">${c.val}</span>
+    </div>`).join('')}
+    ${pass?`<div style="margin-top:6px;font-size:9px;color:${C.mu}">예상 ROI = (1 - 합계) / 합계 × 100 = <b style="color:${C.gr}">+${((1-sum)/sum*100).toFixed(1)}%</b></div>`:''}
+  </div>`;
+}
+  if(!getKey()){toast("API 키 필요",C.rd);return}
+  const s=wState;
+  if(!s.city||!s.gfsMean||!s.ecmwfMean){toast("도시·GFS·ECMWF 필수 입력",C.yw);return}
+
+  const btn=document.getElementById('w-run-btn');
+  const res=document.getElementById('w-result');
+  btn.textContent='Claude 분석 중...'; btn.disabled=true;
+  res.innerHTML=`<div style="text-align:center;padding:16px"><div class="spin"></div><div style="font-size:10px;color:${C.pu};margin-top:10px">기상 모델 종합 중...</div></div>`;
+
+  const prompt=`You are a meteorological forecaster for ${s.city} on ${s.date||'today'}.
+
+Inputs:
+- GFS ensemble: mean=${s.gfsMean}°F, std=${s.gfsStd||4}, range=${s.gfsRange||'N/A'}
+- ECMWF ensemble: mean=${s.ecmwfMean}°F, std=${s.ecmwfStd||4}
+- NWS forecast discussion: ${s.nwsText||'No NWS text provided. Use model data only.'}
+- Station climatology: 30-yr mean=${s.climMean||'N/A'}°F, std=${s.climStd||'N/A'}
+- Yesterday high: ${s.yestHigh||'N/A'}°F (forecast was ${s.yestForecast||'N/A'}°F)
+- Recent 14-day forecast bias: ${s.biasPp||0}pp on average
+
+Output ONLY a valid JSON object with no extra text:
+{
+  "mean": <point estimate °F>,
+  "std": <uncertainty °F>,
+  "reasoning": "<2 sentences on synoptic regime and key risks>",
+  "uhi_adjustment": <pp shift for urban heat island>,
+  "regime_uncertainty": "<low|medium|high>"
+}`;
+
+  try{
+    const d=await claude([{role:"user",content:prompt}],[],400);
+    const text=d.content?.filter(c=>c.type==="text").map(c=>c.text).join("")||"";
+    const m=text.match(/\{[\s\S]*\}/);
+    if(!m)throw new Error("JSON 파싱 실패");
+    const fc=JSON.parse(m[0]);
+    wState.forecast=fc;
+
+    const mean=parseFloat(fc.mean), std=parseFloat(fc.std)||4;
+    wState.binProbs=forecastToBinProbs(mean, std, s.binEdges);
+
+    // Parse market prices if entered
+    const mktInputs=document.querySelectorAll('.w-mkt-price');
+    wState.marketPrices=Array.from(mktInputs).map(i=>parseFloat(i.value)||0);
+    const mktSum=wState.marketPrices.reduce((a,b)=>a+b,0);
+    if(mktSum>0){
+      wState.marketPrices=wState.marketPrices.map(p=>p/mktSum);
+    }
+
+    wState.edges=wState.binProbs.map((p,i)=>p-(wState.marketPrices[i]||0));
+
+    const {core, hedges, highUnc}=wState.marketPrices.some(p=>p>0)
+      ? selectTrades(wState.binProbs, wState.marketPrices, std)
+      : {core:[],hedges:[],highUnc:fc.regime_uncertainty==='high'};
+
+    const uncColor=fc.regime_uncertainty==='high'?C.rd:fc.regime_uncertainty==='medium'?C.yw:C.gr;
+
+    res.innerHTML=`<div class="fade">
+    <!-- FORECAST RESULT -->
+    <div class="sec" style="border-color:${C.ac}44">
+      <div class="stitle" style="color:${C.ac}">🌡 Claude 기상 예측</div>
+      <div class="g3" style="margin-bottom:10px">
+        <div class="stat-b"><div class="sv" style="color:${C.ac}">${fc.mean}°F</div><div class="sl">예측값</div></div>
+        <div class="stat-b"><div class="sv" style="color:${C.yw}">±${fc.std}°F</div><div class="sl">불확실성</div></div>
+        <div class="stat-b"><div class="sv" style="color:${uncColor};font-size:11px">${fc.regime_uncertainty?.toUpperCase()}</div><div class="sl">불확도</div></div>
+      </div>
+      ${fc.reasoning?`<div style="font-size:10px;color:${C.tx};line-height:1.7;padding:8px;background:var(--p2);border-radius:4px;margin-bottom:8px">💡 ${fc.reasoning}</div>`:''}
+      ${fc.uhi_adjustment?`<div style="font-size:9px;color:${C.mu}">UHI 보정: ${fc.uhi_adjustment>0?"+":""}${fc.uhi_adjustment}pp 적용</div>`:''}
+      ${highUnc?`<div style="margin-top:8px;padding:7px;background:${C.rd}18;border:1px solid ${C.rd}44;border-radius:4px;font-size:10px;color:${C.rd}">⚠ HIGH UNCERTAINTY — 헤지 레이어 자동 활성화</div>`:''}
+    </div>
+
+    <!-- BIN DISTRIBUTION -->
+    <div class="sec">
+      <div class="stitle">📊 구간 확률 분포</div>
+      ${wState.binProbs.map((p,i)=>{
+        const label=`${s.binEdges[i]}~${s.binEdges[i+1]}°F`;
+        const mkt=wState.marketPrices[i]||0;
+        const edgePp=((p-mkt)*100);
+        const barW=Math.round(p*100);
+        const mktW=Math.round(mkt*100);
+        const edgeColor=edgePp>10?C.gr:edgePp<-10?C.rd:C.mu;
+        const tradeTag=wState.marketPrices.some(x=>x>0)
+          ?(core.find(c=>c.bin===i)?`<span style="font-size:8px;padding:1px 5px;background:${C.gr}18;border:1px solid ${C.gr}44;border-radius:2px;color:${C.gr}">CORE</span>`
+            :hedges.find(h=>h.bin===i)?`<span style="font-size:8px;padding:1px 5px;background:${C.yw}18;border:1px solid ${C.yw}44;border-radius:2px;color:${C.yw}">HEDGE</span>`:''):'';
+        return`<div style="margin-bottom:7px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+            <span style="font-size:9px;color:${p>0.15?C.br:C.mu}">${label}</span>
+            <div style="display:flex;align-items:center;gap:5px">
+              ${tradeTag}
+              ${wState.marketPrices.some(x=>x>0)?`<span style="font-size:9px;color:${edgeColor};font-weight:700">${edgePp>0?"+":""}${edgePp.toFixed(1)}pp</span>`:''}
+              <span style="font-size:10px;color:${C.br};font-weight:700">${(p*100).toFixed(1)}%</span>
+            </div>
+          </div>
+          <div style="height:6px;background:var(--bd);border-radius:3px;overflow:hidden;position:relative">
+            <div style="position:absolute;height:100%;width:${barW}%;background:${p>0.2?C.ac:C.mu}55;border-radius:3px"></div>
+            ${mkt>0?`<div style="position:absolute;height:100%;width:${mktW}%;border-right:2px solid ${C.yw};opacity:0.7"></div>`:''}
+          </div>
+        </div>`;
+      }).join('')}
+      ${wState.marketPrices.some(x=>x>0)?`<div style="font-size:8px;color:${C.mu};margin-top:6px">— 노란 선: 시장가격 | 막대: AI 예측 | pp: 엣지</div>`:''}
+    </div>
+
+    <!-- TRADE DECISIONS -->
+    ${wState.marketPrices.some(x=>x>0)?`<div class="sec" style="border-color:${core.length>0?C.gr:C.mu}44">
+      <div class="stitle">🎯 트레이드 결정</div>
+      ${core.length===0&&hedges.length===0?`<div style="text-align:center;padding:12px;font-size:11px;color:${C.mu}">SKIP — 10pp 초과 엣지 없음</div>`:
+      `${core.map(c=>`<div style="background:${C.gr}0e;border:1px solid ${C.gr}33;border-radius:4px;padding:9px;margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:11px;color:${C.gr};font-weight:700">CORE · 구간 ${s.binEdges[c.bin]}~${s.binEdges[c.bin+1]}°F</span>
+          <span style="font-size:10px;color:${C.gr}">+${c.edgePp}pp</span>
+        </div>
+        <div class="g3">${kv("모델",((wState.binProbs[c.bin]||0)*100).toFixed(1)+"%")}${kv("시장",((wState.marketPrices[c.bin]||0)*100).toFixed(1)+"%")}${kv("켈리",(c.kelly*100).toFixed(1)+"%",C.ac)}</div>
+        <div style="margin-top:5px;font-size:10px;color:${C.ac}">베팅액: $${(bankroll*c.kelly).toFixed(0)} (켈리 25%)</div>
+      </div>`).join('')}
+      ${hedges.map(h=>`<div style="background:${C.yw}0e;border:1px solid ${C.yw}33;border-radius:4px;padding:9px;margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:11px;color:${C.yw};font-weight:700">HEDGE · 구간 ${s.binEdges[h.bin]}~${s.binEdges[h.bin+1]}°F</span>
+          <span style="font-size:9px;color:${C.yw}">${h.type==='extreme'?'극단값':'꼬리'}</span>
+        </div>
+        <div class="g2">${kv("고정 베팅",(h.stake*100).toFixed(1)+"%")}${kv("베팅액","$"+(bankroll*h.stake).toFixed(0),C.yw)}</div>
+      </div>`).join('')}`}
+    </div>`:''}
+
+    <!-- KELLY REFERENCE -->
+    <div class="sec">
+      <div class="stitle">📐 켈리 참조 계산기</div>
+      <div class="g2" style="margin-bottom:8px">
+        <div><div style="font-size:9px;color:${C.mu};margin-bottom:3px">모델 확률 (%)</div>
+          <input type="number" id="kc-model" placeholder="65" min="1" max="99" oninput="calcKellyRef()"></div>
+        <div><div style="font-size:9px;color:${C.mu};margin-bottom:3px">시장 가격 ($)</div>
+          <input type="number" id="kc-mkt" placeholder="0.45" step="0.01" min="0.01" max="0.99" oninput="calcKellyRef()"></div>
+      </div>
+      <div id="kc-res" style="font-size:10px;color:${C.mu};text-align:center">값 입력 시 계산</div>
+    </div>
+
+    <!-- RISK METRICS GUIDE -->
+    <div class="sec">
+      <div class="stitle">📈 리스크 지표 (zostaff 기준)</div>
+      ${[
+        ["Sharpe","연환산 수익/변동성","목표: >1.0","AI봇 +1.09"],
+        ["Sortino","하락 변동성만 측정","목표: >1.5","하락 리스크만"],
+        ["Calmar","연환산수익/최대손실","목표: >0.5","드로다운 대비"],
+        ["Max DD","최고점→최저점 손실","관리: <10%","AI봇 -4.05%"]
+      ].map(([n,d,t,b])=>`<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--bd)55">
+        <div><div style="font-size:10px;color:var(--br);font-weight:700">${n}</div><div style="font-size:9px;color:${C.mu}">${d}</div></div>
+        <div style="text-align:right"><div style="font-size:9px;color:${C.ac}">${t}</div><div style="font-size:8px;color:${C.mu}">${b}</div></div>
+      </div>`).join('')}
+    </div>
+
+    <button onclick="resetWeatherForecast()" class="btn btn-out" style="margin-top:4px">↺ 새 예측</button>
+    </div>`;
+
+    toast("날씨 예측 완료",C.gr);
+  }catch(e){
+    res.innerHTML=`<div class="sec" style="border-color:${C.rd}44"><div style="font-size:10px;color:${C.rd}">오류: ${e.message}</div><button onclick="runWeatherForecast()" class="btn btn-out" style="margin-top:8px">재시도</button></div>`;
+  }finally{btn.textContent='Claude 기상 예측 실행';btn.disabled=false;}
+}
+
+function calcKellyRef(){
+  const mp=parseFloat(document.getElementById('kc-model')?.value)/100;
+  const pp=parseFloat(document.getElementById('kc-mkt')?.value);
+  const res=document.getElementById('kc-res');
+  if(!mp||!pp||mp<=pp||pp<=0){if(res)res.innerHTML=`<span style="color:${C.mu}">값 입력 시 계산</span>`;return}
+  const fk=kellyFraction(mp,pp,1), adj=kellyFraction(mp,pp,0.25);
+  const bet=(bankroll*adj).toFixed(0);
+  const ev=(mp*(1-pp)-(1-mp)*pp).toFixed(4);
+  if(res)res.innerHTML=`<div class="g2" style="text-align:left">
+    ${kv("EV",(ev>0?"+":"")+ev,ev>0?C.gr:C.rd)}
+    ${kv("풀 켈리",(fk*100).toFixed(1)+"%")}
+    ${kv("적용(25%)",(adj*100).toFixed(1)+"%",C.ac)}
+    ${kv("베팅액","$"+bet,C.br)}
+  </div>`;
+}
+
+function resetWeatherForecast(){
+  wState.forecast=null; wState.binProbs=[]; wState.edges=[];
+  document.getElementById('w-result').innerHTML='';
+  document.getElementById('w-run-btn').textContent='Claude 기상 예측 실행';
+  document.getElementById('w-run-btn').disabled=false;
+}
+
+function renderWeatherTab(){
+  const el=document.getElementById('tab-weather');
+  const bins=wState.binEdges;
+  const nbins=bins.length-1;
+  const cityInfo=WEATHER_CITIES[wState.city];
+
+  el.innerHTML=`<div class="fade" style="padding:12px">
+
+  <!-- HEADER -->
+  <div style="background:${C.ac}0a;border:1px solid ${C.ac}22;border-radius:7px;padding:10px 12px;margin-bottom:10px">
+    <div style="font-size:10px;color:${C.ac};font-weight:700;letter-spacing:2px;margin-bottom:2px">WEATHER MARKET BOT</div>
+    <div style="font-size:9px;color:${C.mu};line-height:1.6">zostaff + Paruchh v3 · 3모델 합의 · 18~30h 진입 · 3-빈 전략</div>
+  </div>
+
+  <!-- ① CITY PICKER — Paruchh 검증 좌표 -->
+  <div class="sec" style="border-color:${C.rd}33">
+    <div class="stitle" style="color:${C.rd}">① 도시 선택 — 관측소 좌표 (CRITICAL)</div>
+    <div style="font-size:9px;color:${C.mu};margin-bottom:8px;line-height:1.6">
+      ⚠ Polymarket은 도심이 아닌 <b style="color:${C.yw}">특정 기상관측소</b>를 기준으로 정산.<br>잘못된 좌표 = 매일 손실 (Paruchh v1~v2 실패 원인)
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">
+      ${Object.entries(WEATHER_CITIES).map(([name,c])=>`
+      <button onclick="selectWeatherCity('${name}')" style="padding:4px 9px;background:${wState.city===name?C.ac:'transparent'};border:1px solid ${wState.city===name?C.ac:C.mu+'66'};border-radius:3px;color:${wState.city===name?'#000':C.tx};font-family:var(--fn);font-size:9px;cursor:pointer">${name}</button>`).join('')}
+    </div>
+    ${cityInfo?`<div style="background:${C.gr}0e;border:1px solid ${C.gr}33;border-radius:4px;padding:8px">
+      <div style="font-size:10px;color:${C.gr};font-weight:700;margin-bottom:5px">📍 ${wState.city} — ${cityInfo.station}</div>
+      <div class="g2">
+        ${kv("위도",cityInfo.lat)}${kv("경도",cityInfo.lon)}
+      </div>
+      <div style="font-size:9px;color:${C.yw};margin-top:4px">⚠ ${cityInfo.note}</div>
+      ${cityInfo.unit==="C"?`<div style="font-size:9px;color:${C.mu};margin-top:3px">단위: °C (폴리마켓 정산)</div>`:''}
+      ${cityInfo.bias?`<div style="font-size:9px;color:${C.yw};margin-top:3px">🌡 도시 편향 보정: +${cityInfo.bias}°C 자동 적용</div>`:''}
+    </div>`:`<div style="font-size:9px;color:${C.mu};text-align:center;padding:8px">위 버튼에서 도시를 선택하거나 아래에 직접 입력</div>`}
+    <div class="g2" style="margin-top:8px">
+      <div><div style="font-size:9px;color:${C.mu};margin-bottom:3px">도시명</div>
+        <input id="w-city" placeholder="직접 입력..." value="${wState.city}" oninput="wState.city=this.value"></div>
+      <div><div style="font-size:9px;color:${C.mu};margin-bottom:3px">날짜</div>
+        <input id="w-date" type="date" value="${wState.date}" oninput="wState.date=this.value"></div>
+    </div>
+  </div>
+
+  <!-- ② ENTRY WINDOW CHECK -->
+  <div class="sec" style="border-color:${C.yw}33">
+    <div class="stitle" style="color:${C.yw}">② 진입 윈도우 확인 (18~30h)</div>
+    <div style="font-size:9px;color:${C.mu};margin-bottom:8px;line-height:1.6">
+      18h 이전 = 시장이 이미 가격 반영 (엣지 없음) · 30h 이후 = 모델 부정확<br>
+      <b style="color:${C.gr}">18~30h 스윗스팟</b>에서만 진입 (Paruchh v3 핵심)
+    </div>
+    <div style="margin-bottom:8px">
+      <div style="font-size:9px;color:${C.mu};margin-bottom:3px">정산 시각 (현지 시간 UTC)</div>
+      <input type="datetime-local" id="w-resolve-time" value="${wState.resolveTime}" oninput="wState.resolveTime=this.value;checkEntryWindow()">
+    </div>
+    <div id="w-window-res"><div style="font-size:9px;color:${C.mu};text-align:center;padding:6px">정산 시각 입력 시 자동 계산</div></div>
+  </div>
+
+  <!-- ③ 3-MODEL CONSENSUS -->
+  <div class="sec">
+    <div class="stitle">③ 3-모델 합의 (ICON · GFS · ECMWF)</div>
+    <div style="font-size:9px;color:${C.mu};margin-bottom:8px;line-height:1.6">
+      Spread > 3°C → <b style="color:${C.rd}">전면 SKIP</b> (모델이 모른다 = 우리도 모름)<br>
+      2개 이상 합의 (1°C 이내) → 아웃라이어 제외 후 진입
+    </div>
+    <div class="g3" style="margin-bottom:8px">
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">ICON (°)</div>
+        <input type="number" id="w-icon-m" value="${wState.iconMean}" oninput="wState.iconMean=this.value;calc3ModelConsensus()" style="text-align:center"></div>
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">GFS (°)</div>
+        <input type="number" id="w-gfs-m" value="${wState.gfsMean}" oninput="wState.gfsMean=this.value;calc3ModelConsensus()" style="text-align:center"></div>
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">ECMWF (°)</div>
+        <input type="number" id="w-ecmwf-m" value="${wState.ecmwfMean}" oninput="wState.ecmwfMean=this.value;calc3ModelConsensus()" style="text-align:center"></div>
+    </div>
+    <div id="w-consensus-res"></div>
+  </div>
+
+  <!-- ④ 3-BIN PRICE FILTER -->
+  <div class="sec" style="border-color:${C.gr}33">
+    <div class="stitle" style="color:${C.gr}">④ 3-빈 가격 필터</div>
+    <div style="font-size:9px;color:${C.mu};margin-bottom:8px;line-height:1.6">
+      중심 + 인접 2개 구간에 분산 베팅. 3가지 조건 모두 통과 시만 진입.<br>
+      <span style="color:${C.gr}">합계 ≤ 0.95</span> · <span style="color:${C.yw}">각 빈 ≥ 0.01</span> · <span style="color:${C.ac}">각 빈 ≤ 0.45</span>
+    </div>
+    <div class="g3" style="margin-bottom:8px">
+      ${['하단 인접','중심 빈','상단 인접'].map((label,i)=>`<div>
+        <div style="font-size:8px;color:${i===1?C.ac:C.mu};margin-bottom:3px">${label}</div>
+        <input type="number" class="w3-bin-price" step="0.01" min="0" max="1" placeholder="${['0.08','0.15','0.10'][i]}" oninput="check3BinFilter()" style="text-align:center;${i===1?`border-color:${C.ac}55`:''}"
+        ></div>`).join('')}
+    </div>
+    <div id="w3-filter-res"></div>
+  </div>
+
+  <!-- ⑤ DETAILED WEATHER DATA -->
+  <div class="sec">
+    <div class="stitle">⑤ 상세 기상 데이터 (Claude 분석용)</div>
+    <div class="g3" style="margin-bottom:8px">
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">GFS Std</div>
+        <input type="number" id="w-gfs-s" value="${wState.gfsStd}" oninput="wState.gfsStd=this.value" placeholder="4" style="text-align:center"></div>
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">ECMWF Std</div>
+        <input type="number" id="w-ecmwf-s" value="${wState.ecmwfStd}" oninput="wState.ecmwfStd=this.value" placeholder="4" style="text-align:center"></div>
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">GFS 범위</div>
+        <input id="w-gfs-r" value="${wState.gfsRange}" oninput="wState.gfsRange=this.value" placeholder="68-82" style="text-align:center"></div>
+    </div>
+    <div class="g2" style="margin-bottom:8px">
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">어제 실제(°)</div>
+        <input type="number" id="w-yest-h" value="${wState.yestHigh}" oninput="wState.yestHigh=this.value" style="text-align:center"></div>
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">어제 예보(°)</div>
+        <input type="number" id="w-yest-f" value="${wState.yestForecast}" oninput="wState.yestForecast=this.value" style="text-align:center"></div>
+    </div>
+    <div class="g3">
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">기후 평균(°)</div>
+        <input type="number" id="w-clim-m" value="${wState.climMean}" oninput="wState.climMean=this.value" style="text-align:center"></div>
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">기후 Std</div>
+        <input type="number" id="w-clim-s" value="${wState.climStd}" oninput="wState.climStd=this.value" style="text-align:center"></div>
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">14일 편향(pp)</div>
+        <input type="number" id="w-bias" value="${wState.biasPp}" oninput="wState.biasPp=this.value" placeholder="0" style="text-align:center"></div>
+    </div>
+  </div>
+
+  <!-- NWS TEXT -->
+  <div class="sec">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div class="stitle" style="margin:0">NWS 예보 토론문</div>
+      <a href="https://www.weather.gov/forecastdiscussions" target="_blank" style="font-size:9px;color:${C.ac};text-decoration:none">↗ NWS</a>
+    </div>
+    <textarea id="w-nws" rows="3" placeholder="기상청 예보 토론 텍스트 붙여넣기 (선택)..." oninput="wState.nwsText=this.value">${wState.nwsText}</textarea>
+  </div>
+
+  <!-- MARKET PRICES (zostaff bin distribution) -->
+  <div class="sec">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="stitle" style="margin:0">폴리마켓 시장가격 (구간별)</div>
+      <a href="https://polymarket.com/sports/weather" target="_blank" style="font-size:9px;color:${C.ac};text-decoration:none">↗ PM</a>
+    </div>
+    <div style="font-size:9px;color:${C.mu};margin-bottom:8px">zostaff KL-분포 분석용 · 각 구간 Yes 가격 (0~1)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      ${Array.from({length:nbins},(_,i)=>`<div>
+        <div style="font-size:8px;color:${C.mu};margin-bottom:2px">${bins[i]}~${bins[i+1]}°F</div>
+        <input type="number" class="w-mkt-price" step="0.01" min="0" max="1" placeholder="0.05" value="${wState.marketPrices[i]||''}" style="text-align:center;font-size:11px">
+      </div>`).join('')}
+    </div>
+  </div>
+
+  <!-- RUN BUTTON -->
+  <button id="w-run-btn" class="btn btn-ac" style="margin-bottom:10px" onclick="runWeatherForecast()">Claude 기상 예측 실행 (zostaff 전략)</button>
+
+  <!-- RESULT -->
+  <div id="w-result"></div>
+
+  <!-- KELLY REF + RISK -->
+  <div class="sec" style="margin-top:4px">
+    <div class="stitle">📐 켈리 참조 계산기</div>
+    <div class="g2" style="margin-bottom:8px">
+      <div><div style="font-size:9px;color:${C.mu};margin-bottom:3px">모델 확률 (%)</div>
+        <input type="number" id="kc-model" placeholder="65" min="1" max="99" oninput="calcKellyRef()"></div>
+      <div><div style="font-size:9px;color:${C.mu};margin-bottom:3px">시장 가격 ($)</div>
+        <input type="number" id="kc-mkt" placeholder="0.45" step="0.01" min="0.01" max="0.99" oninput="calcKellyRef()"></div>
+    </div>
+    <div id="kc-res" style="font-size:10px;color:${C.mu};text-align:center">값 입력 시 계산</div>
+  </div>
+
+  <!-- PARUCHH SCARS (오류 방지) -->
+  <div class="sec" style="border-color:${C.rd}22">
+    <div class="stitle" style="color:${C.rd}">⚠ Paruchh 실패 교훈 (v1~v2 손실 $63)</div>
+    ${[
+      ["좌표 오류","도시 중심이 아닌 관측소 좌표 사용. ICAO 코드 ≠ 정확한 좌표","위 도시 선택기 사용"],
+      ["진입 타이밍","6~12h 전 = 이미 가격 반영. 18~30h 진입 필수","진입 윈도우 체크"],
+      ["단일 모델","GFS 하나만 = 아웃라이어에 취약. 3모델 합의 필수","3-모델 합의 확인"],
+      ["단일 빈","1개 빈 = 1°C 미스 → 전액 손실. 3개 인접 빈 분산","3-빈 필터 통과시만"],
+      ["HK 계절편향","5~9월 홍콩: 모델이 1°C 낮게 예측하는 경향","+1°C 도시 보정 자동"],
+    ].map(([t,d,f])=>`<div style="padding:7px 0;border-bottom:1px solid var(--bd)55">
+      <div style="display:flex;justify-content:space-between;margin-bottom:2px">
+        <span style="font-size:10px;color:var(--br);font-weight:700">${t}</span>
+        <span style="font-size:8px;padding:1px 5px;background:${C.gr}18;border:1px solid ${C.gr}44;border-radius:2px;color:${C.gr}">${f}</span>
+      </div>
+      <div style="font-size:9px;color:${C.mu}">${d}</div>
+    </div>`).join('')}
+  </div>
+
+  <!-- ⑥ TAIL-BIN SNIPER (ColdMath / BeefSlayer 전략) -->
+  <div class="sec" style="border-color:${C.pu}33">
+    <div class="stitle" style="color:${C.pu}">⑥ 꼬리빈 스나이퍼 (ColdMath 전략)</div>
+    <div style="font-size:9px;color:${C.mu};margin-bottom:8px;line-height:1.6">시장이 0.01~0.05¢에 방치한 극단 구간에 진입 → 적중 시 수천 % 수익.<br>ColdMath: $25→$12,452(+49,733%) · BeefSlayer: $6→$2,990(+49,745%)</div>
+    <div class="g3" style="margin-bottom:8px">
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">시장가격 ($)</div>
+        <input type="number" id="sniper-mkt" step="0.001" placeholder="0.02" min="0.001" max="0.20" oninput="calcSniper()" style="text-align:center"></div>
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">모델 확률 (%)</div>
+        <input type="number" id="sniper-model" placeholder="8" min="0.1" max="50" oninput="calcSniper()" style="text-align:center"></div>
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">베팅액 ($)</div>
+        <input type="number" id="sniper-bet" placeholder="25" min="1" oninput="calcSniper()" style="text-align:center"></div>
+    </div>
+    <div id="sniper-result" style="font-size:10px;color:${C.mu};text-align:center;padding:6px">값 입력 시 계산</div>
+  </div>
+
+  <!-- ⑦ TOP 7 트레이더 레퍼런스 -->
+  <div class="sec">
+    <div class="stitle">🏆 Top 7 날씨 트레이더 전략</div>
+    <div style="font-size:9px;color:${C.mu};margin-bottom:10px">PolymarketSuccubus 랭킹 · 전략 패턴 참조용</div>
+    ${[
+      {rank:1,name:"ColdMath",      pnl:"+$124,896",wr:"81.7%",city:"Tokyo·Chicago·Wellington",note:"Clawdbot 자동화 · 0.01¢ 꼬리빈 · 24/7 스캔",col:C.yw},
+      {rank:2,name:"VibeTrader",    pnl:"+$132,854",wr:"37.7%",city:"NYC·Miami·이벤트",         note:"날씨+이벤트 분산 · 저가 진입 · 낮은 승률 고배율",col:C.ac},
+      {rank:3,name:"BeefSlayer",    pnl:"+$62,064", wr:"68.2%",city:"Seattle·Atlanta·NYC",      note:"극저가 진입 · $6→$2,990 · 과소평가 구간 탐지",col:C.gr},
+      {rank:4,name:"HenryAtmoPhD", pnl:"+$55,838", wr:"36.5%",city:"Seoul·NYC·London",         note:"대기과학 교수 · 기후 데이터 + 과학적 확률",col:C.pu},
+      {rank:5,name:"HondaCivic",    pnl:"+$55,408", wr:"84.2%",city:"HK·NYC·London·BA",        note:"최저가 진입 $37→$15,182 · 84% 승률 최고",col:C.gr},
+      {rank:6,name:"russell110320", pnl:"+$43,936", wr:"64.3%",city:"전지구 온도 기록",          note:"월별 전지구 기온 이상 마켓 · 장기 기후 데이터",col:C.ac},
+      {rank:7,name:"Maskache2",     pnl:"+$34,106", wr:"33.5%",city:"Seoul·HK·Wellington",     note:"소수 도시 집중 · 역사 데이터 + 예보 오류 탐지",col:C.mu},
+    ].map(t=>`<div style="background:var(--p2);border-radius:5px;padding:9px;margin-bottom:6px;border-left:3px solid ${t.col}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+        <div><span style="font-size:10px;color:${t.col};font-weight:700;margin-right:5px">#${t.rank}</span><span style="font-size:11px;color:var(--br);font-weight:700">${t.name}</span></div>
+        <div style="text-align:right"><div style="font-size:11px;color:${C.gr};font-weight:700">${t.pnl}</div><div style="font-size:8px;color:${C.mu}">승률 ${t.wr}</div></div>
+      </div>
+      <div style="font-size:9px;color:${C.ac};margin-bottom:2px">🌍 ${t.city}</div>
+      <div style="font-size:9px;color:${C.mu}">${t.note}</div>
+    </div>`).join('')}
+  </div>
+
+  <!-- 도시별 수익 집중도 -->
+  <div class="sec">
+    <div class="stitle">🌏 도시별 수익 집중도</div>
+    <div style="font-size:9px;color:${C.mu};margin-bottom:8px">Top 7 트레이더 공통 수익 도시 · 관측소 주의사항</div>
+    ${[
+      {city:"Seoul (RKSI)",    score:95,note:"Maskache2·HenryPhD 주력 · 봄 기온 변동 큼",  warn:"인천공항"},
+      {city:"NYC (KLGA)",      score:90,note:"3명 이상 공통 수익처",                         warn:"LaGuardia"},
+      {city:"Hong Kong (HKO)",score:80,note:"HondaCivic 최대 수익 · 계절 편향 주의",        warn:"+1°C 보정"},
+      {city:"London (EGLC)",  score:75,note:"HenryPhD·HondaCivic 겨울 전략",               warn:"London City"},
+      {city:"Wellington",      score:70,note:"ColdMath 주요 수익처",                         warn:"남반구 계절"},
+      {city:"Tokyo (RJTT)",   score:65,note:"ColdMath 최대 단일 수익 $12,427",              warn:"하네다 필수"},
+      {city:"Chicago (KORD)", score:60,note:"BeefSlayer·ColdMath 냉기 구간",               warn:"O'Hare"},
+    ].map(c=>{
+      const col=c.score>=85?C.gr:c.score>=70?C.ac:C.yw;
+      return`<div style="margin-bottom:7px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+          <span style="font-size:10px;color:var(--br);font-weight:700">${c.city}</span>
+          <span style="font-size:8px;padding:1px 5px;background:${C.rd}18;border:1px solid ${C.rd}33;border-radius:2px;color:${C.rd}">${c.warn}</span>
+        </div>
+        <div style="height:5px;background:var(--bd);border-radius:3px;overflow:hidden;margin-bottom:3px">
+          <div style="height:100%;width:${c.score}%;background:${col};border-radius:3px"></div>
+        </div>
+        <div style="font-size:8px;color:${C.mu}">${c.note}</div>
+      </div>`;
+    }).join('')}
+  </div>
+
+  <!-- SOURCES -->
+  <div class="sec" style="border-color:${C.pu}22">
+    <div class="stitle" style="color:${C.pu}">🔗 데이터 소스</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px">
+      <a href="https://api.open-meteo.com/v1/forecast?bias_correction=true" target="_blank" class="el">Open-Meteo API</a>
+      <a href="https://www.weather.gov/forecastdiscussions" target="_blank" class="el">NWS 토론</a>
+      <a href="https://www.pivotalweather.com/model.php?m=gfs" target="_blank" class="el">GFS 앙상블</a>
+      <a href="https://charts.ecmwf.int/" target="_blank" class="el">ECMWF</a>
+      <a href="https://polymarket.com/sports/weather" target="_blank" class="el el-pu">폴리마켓 날씨</a>
+      <a href="https://github.com/ventry089/weatherbot" target="_blank" class="el el-pu">ventry089</a>
+    </div>
+    <div style="margin-top:8px;font-size:9px;color:${C.mu}">Open-Meteo: <code style="color:${C.ac}">bias_correction=true</code> 파라미터 필수 — 관측소 로컬 보정 +30~40% 정확도</div>
+  </div>
+
+  <!-- CF LINK -->
+  <div class="sec" style="border-color:${C.yw}22">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:10px;color:${C.tx}">🔬 반사실 분석 (exit 효율 · ventry089 패턴)</div>
+      <button onclick="go('cf',null)" style="padding:4px 10px;background:${C.yw}18;border:1px solid ${C.yw}44;border-radius:3px;color:${C.yw};font-family:var(--fn);font-size:9px;cursor:pointer">이동 →</button>
+    </div>
+  </div>
+
+  </div>`;
+
+  // Auto-run calculations if data exists
+  setTimeout(()=>{calc3ModelConsensus();checkEntryWindow();check3BinFilter();},100);
+}
+
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
+function saveCFEntry(id,held){
+  const t=trades.find(x=>x.id===id);
+  if(!t)return;
+  const v=parseFloat(held);
+  if(isNaN(v))return;
+  t.held_pnl=v;
+  saveAll();
+  toast(`반사실 +$${v} 저장됨`,C.yw);
+  renderCFTab();
+}
+
+function renderCFTab(){
+  const el=document.getElementById('tab-cf');
+  const res=trades.filter(t=>t.outcome);
+  const actualPnl=res.reduce((a,t)=>a+(t.pnl||0),0);
+  const cfTrades=res.filter(t=>t.held_pnl!=null);
+  const heldPnl=cfTrades.reduce((a,t)=>a+(t.held_pnl||0),0);
+  const leftOnTable=heldPnl-actualPnl;
+  const exitScore=heldPnl>0?Math.max(0,Math.round(actualPnl/heldPnl*100)):null;
+
+  // pending cf trades (no outcome yet)
+  const pending=trades.filter(t=>!t.outcome);
+
+  let h=`<div class="fade" style="padding:12px">
+
+  <!-- SUMMARY -->
+  <div class="sec" style="border-color:${C.yw}33">
+    <div class="stitle">🔬 반사실 분석 (Counterfactual)</div>
+    <div class="g3" style="margin-bottom:10px">
+      <div class="stat-b">
+        <div class="sv" style="color:${actualPnl>=0?C.gr:C.rd}">${actualPnl>=0?"+":""}$${actualPnl.toFixed(0)}</div>
+        <div class="sl">실제 PnL</div>
+      </div>
+      <div class="stat-b">
+        <div class="sv" style="color:${C.yw}">${heldPnl>0?"+":""}$${heldPnl.toFixed(0)}</div>
+        <div class="sl">홀드시 PnL</div>
+      </div>
+      <div class="stat-b">
+        <div class="sv" style="color:${C.rd}">${leftOnTable>0?"-":""}$${Math.abs(leftOnTable).toFixed(0)}</div>
+        <div class="sl">놓친 수익</div>
+      </div>
+    </div>
+    ${exitScore!=null?`
+    <div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:${C.mu};margin-bottom:4px">
+        <span>Exit 효율</span><span style="color:${exitScore>60?C.gr:exitScore>30?C.yw:C.rd};font-weight:700">${exitScore}%</span>
+      </div>
+      <div class="prog"><div class="prog-f" style="width:${exitScore}%;background:${exitScore>60?C.gr:exitScore>30?C.yw:C.rd}"></div></div>
+      <div style="font-size:9px;color:${C.mu};margin-top:4px">${exitScore>60?"✓ Exit 전략 양호":exitScore>30?"⚠ Trailing stop 재검토 권장":"❌ Exit이 수익을 잠식 중 — ventry089 패턴"}</div>
+    </div>
+    `:''}
+    ${cfTrades.length===0?`<div style="font-size:10px;color:${C.mu};text-align:center;padding:8px">반사실 데이터 없음 — 아래에서 입력하세요</div>`:''}
+  </div>
+
+  <!-- CF TRADE LIST (trades with outcome + held_pnl) -->
+  ${cfTrades.length?`<div class="sec">
+    <div class="stitle">📊 반사실 기록</div>
+    ${cfTrades.map(t=>{
+      const ratio=t.held_pnl>0?(t.pnl||0)/t.held_pnl:0;
+      const pct=Math.round(ratio*100);
+      const dt=new Date(t.ts).toLocaleString("ko-KR",{month:"2-digit",day:"2-digit"});
+      return`<div style="background:var(--p2);border-radius:4px;padding:10px;margin-bottom:7px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+          <div style="font-size:11px;color:var(--br);font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.market||"(없음)"}</div>
+          <span style="font-size:8px;color:${C.mu};margin-left:6px;flex-shrink:0">${dt}</span>
+        </div>
+        <div class="g3" style="margin-bottom:6px">
+          ${kv("실제",(t.pnl>=0?"+":"")+"$"+Math.abs(t.pnl||0).toFixed(0),t.pnl>=0?C.gr:C.rd)}
+          ${kv("홀드시","+$"+t.held_pnl.toFixed(0),C.yw)}
+          ${kv("배율","×"+Math.max(1,(t.held_pnl/(Math.abs(t.pnl||0.01))).toFixed(0)),C.rd)}
+        </div>
+        <div class="prog"><div class="prog-f" style="width:${Math.min(100,pct)}%;background:${pct>60?C.gr:pct>30?C.yw:C.rd}"></div></div>
+        <div style="font-size:8px;color:${C.mu};margin-top:3px">Exit 효율 ${pct}% · ${pct<30?"Trailing stop 이른 청산 의심":pct<60?"부분 수익 실현":"Exit 전략 양호"}</div>
+      </div>`;
+    }).join('')}
+  </div>`:''}
+
+  <!-- MANUAL CF INPUT (trades without held_pnl) -->
+  <div class="sec">
+    <div class="stitle">✏ 반사실 PnL 입력</div>
+    <div style="font-size:10px;color:${C.mu};margin-bottom:9px;line-height:1.6">결과 기록된 트레이드에 "홀드했을 경우 수익"을 입력하면 Exit 효율을 분석합니다</div>
+    ${res.length===0?`<div style="font-size:10px;color:${C.mu};text-align:center;padding:10px">기록된 트레이드가 없습니다</div>`:
+    res.map(t=>`<div style="background:var(--p2);border-radius:4px;padding:9px;margin-bottom:6px">
+      <div style="font-size:10px;color:var(--br);font-weight:700;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.market||"(없음)"}</div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span style="font-size:9px;color:${t.pnl>=0?C.gr:C.rd};white-space:nowrap">실제 ${t.pnl>=0?"+":""}$${Math.abs(t.pnl||0).toFixed(0)}</span>
+        <input type="number" id="cf-manual-${t.id}" value="${t.held_pnl||''}" placeholder="홀드시 PnL..." style="font-size:11px;flex:1;text-align:center">
+        <button onclick="saveCFEntry(${t.id},document.getElementById('cf-manual-${t.id}').value)" style="padding:5px 10px;background:${C.yw}18;border:1px solid ${C.yw}44;border-radius:3px;color:${C.yw};font-family:var(--fn);font-size:9px;cursor:pointer;white-space:nowrap">저장</button>
+      </div>
+    </div>`).join('')}
+  </div>
+
+  <!-- PENDING (no outcome yet) -->
+  ${pending.length?`<div class="sec">
+    <div class="stitle">⏳ 결과 대기 중</div>
+    ${pending.map(t=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--bd)55;font-size:10px">
+      <span style="color:var(--br);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px">${t.market||"(없음)"}</span>
+      <span style="color:${C.mu};font-size:9px">$${t.price||"--"}</span>
+    </div>`).join('')}
+  </div>`:''}
+
+  <!-- ventry089 REFERENCE -->
+  <div class="sec" style="border-color:${C.pu}33">
+    <div class="stitle" style="color:${C.pu}">📌 ventry089 벤치마크</div>
+    <div style="font-size:9px;color:${C.mu};margin-bottom:8px">24h paper mode 기준 (날씨봇)</div>
+    ${[["Ankara","$27","+$1,156","×43"],["Buenos Aires","$20","+$520","×26"],["Tokyo","$12","+$51","×4"]].map(([city,act,held,mult])=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--bd)55;font-size:10px">
+      <span style="color:var(--br);font-weight:700;width:90px">${city}</span>
+      <span style="color:${C.gr}">${act}</span>
+      <span style="color:${C.yw}">${held}</span>
+      <span style="color:${C.rd};font-size:9px">${mult}</span>
+    </div>`).join('')}
+    <div style="margin-top:8px;font-size:9px;color:${C.mu};line-height:1.6">실제 PnL: <b style="color:${C.gr}">+$20.65</b> → 홀드시: <b style="color:${C.yw}">+$1,761.77</b><br>Exit 효율: <b style="color:${C.rd}">1.2%</b> — trailing stop이 수익을 99% 잠식</div>
+  </div>
+
+  </div>`;
+  el.innerHTML=h;
+}
+
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
+loadAll();
+updateHeader();
+updateBayesBadge();
+document.getElementById('log-cnt').textContent=trades.length;
+renderScanUpload();
+</script>
+</body>
+</html>
