@@ -1687,7 +1687,7 @@ const WEATHER_CITIES = {
   "Tokyo":     {lat:35.5494, lon:139.7798, station:"RJTT",  note:"하네다 (NOT 나리타 60km)", unit:"C", bias:0},
   "HongKong":  {lat:22.3022, lon:114.1742, station:"HKO",   note:"관측소 (NOT 공항)", unit:"C", bias:1.0},
   "Singapore": {lat:1.3502,  lon:103.9940, station:"WSSS",  note:"창이공항", unit:"C", bias:0},
-  "Seoul":     {lat:37.4691, lon:126.4505, station:"RKSI",  note:"인천 (NOT 서울 도심 50km)", unit:"C", bias:0},
+  "Seoul":     {lat:37.4691, lon:126.4505, station:"RKSI",  note:"인천 (NOT 서울 도심 50km)", unit:"C", bias:-2.0},
   "London":    {lat:51.5048, lon:0.0495,   station:"EGLC",  note:"London City", unit:"C", bias:0},
   "Paris":     {lat:48.9694, lon:2.4414,   station:"LFPB",  note:"Le Bourget (NOT CDG)", unit:"C", bias:0},
 };
@@ -1823,12 +1823,16 @@ async function autoFetchWeather(targetDate){
     const spread=Math.max(...v)-Math.min(...v);
     const center=(v[0]+v[1]+v[2])/3;
 
+    // 날씨앱 편향 보정 (Seoul: 날씨앱이 실제보다 2~3°C 높게 나오는 경향)
+    const appBias=parseFloat(document.getElementById('w-app-bias')?.value)||(-2);
+    const corrected=center+appBias;
+
     wState.iconMean=v[0].toFixed(1);
     wState.gfsMean=v[1].toFixed(1);
     wState.ecmwfMean=v[2].toFixed(1);
-    wState.city='Seoul'; wState.cityBias=0;
+    wState.city='Seoul'; wState.cityBias=appBias;
 
-    const agree=spread<=5; // Seoul 봄철 5°C로 완화
+    const agree=spread<=5;
     const sc=agree?C.gr:C.rd;
     const now=new Date();
     const resolveKST=new Date(`${targetDate}T23:59:00+09:00`);
@@ -1849,19 +1853,23 @@ async function autoFetchWeather(targetDate){
         ${kv("GFS",v[1].toFixed(1)+"°C",C.yw)}
         ${kv("ECMWF",v[2].toFixed(1)+"°C",C.pu)}
       </div>
-      <div class="g2">
-        ${kv("중심값",center.toFixed(1)+"°C",C.br)}
+      <div class="g3">
+        ${kv("모델 중심",center.toFixed(1)+"°C",C.br)}
         ${kv("Spread",spread.toFixed(1)+"°C",sc)}
+        ${kv("보정후",corrected.toFixed(1)+"°C",C.ac)}
       </div>
     </div>
+    <div style="padding:8px;background:${C.ac}18;border:1px solid ${C.ac}44;border-radius:4px;margin-bottom:6px;font-size:12px;color:${C.ac}">
+      📐 날씨앱 편향 보정: ${center.toFixed(1)} ${appBias>=0?'+':''}${appBias}°C = <b>${corrected.toFixed(1)}°C</b> (실제 예상 최고기온)
+    </div>
     <div style="padding:8px;background:${sc}18;border:1px solid ${sc}44;border-radius:4px;margin-bottom:6px">
-      <div style="font-size:14px;color:${sc};font-weight:700">${agree?`✅ 3-모델 합의 (spread ${spread.toFixed(1)}°C)`:`❌ SKIP — 모델 분산 ${spread.toFixed(1)}°C > 3°C`}</div>
+      <div style="font-size:14px;color:${sc};font-weight:700">${agree?`✅ 3-모델 합의 (spread ${spread.toFixed(1)}°C)`:`❌ SKIP — 모델 분산 ${spread.toFixed(1)}°C > 5°C`}</div>
     </div>
     <div style="padding:8px;background:${wc}18;border:1px solid ${wc}44;border-radius:4px;margin-bottom:8px">
       <div style="font-size:14px;color:${wc};font-weight:700">${wm}</div>
     </div>
-    ${agree&&inWindow?`<div style="padding:8px;background:${C.gr}0e;border:1px solid ${C.gr}33;border-radius:4px;margin-bottom:8px;font-size:14px;color:${C.gr}">
-      🎯 진입 조건 충족 — 폴리마켓에서 ${center.toFixed(0)}°C 전후 구간 가격 확인
+    ${agree&&inWindow?`<div style="padding:8px;background:${C.pu}18;border:1px solid ${C.pu}44;border-radius:4px;margin-bottom:8px;font-size:14px;color:${C.pu}">
+      🎯 진입 조건 충족 — 폴리마켓에서 <b>${corrected.toFixed(0)}°C</b> 전후 구간 가격 확인
     </div>`:''}
     <button onclick="autoFetchWeather('${targetDate}')" style="width:100%;padding:7px;background:var(--ac)18;border:1px solid var(--ac)44;border-radius:4px;color:var(--ac);font-family:var(--fn);font-size:13px;cursor:pointer;letter-spacing:1px">🔄 재조회</button>
     </div>`;
@@ -1871,7 +1879,7 @@ async function autoFetchWeather(targetDate){
       if(el)el.value=v[i].toFixed(1);
     });
     calc3ModelConsensus();
-    toast(`조회 완료 — 중심값 ${center.toFixed(1)}°C`,C.gr);
+    toast(`조회 완료 — 보정후 ${corrected.toFixed(1)}°C`,C.gr);
 
   }catch(e){
     res.innerHTML=`<div style="padding:10px;background:${C.rd}18;border:1px solid ${C.rd}44;border-radius:4px">
@@ -2183,6 +2191,14 @@ function renderWeatherTab(){
     <div style="font-size:13px;color:${C.mu};margin-bottom:10px;line-height:1.6">
       📍 Seoul 인천공항(RKSI) · bias_correction=true<br>
       ICON · GFS · ECMWF 3모델 동시 조회 → 자동 계산
+    </div>
+    <div style="margin-bottom:10px;padding:8px;background:var(--p2);border-radius:5px;border:1px solid var(--bd)">
+      <div style="font-size:12px;color:${C.mu};margin-bottom:5px">📐 날씨앱 편향 보정 (Seoul 기본값: -2°C)</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="number" id="w-app-bias" value="-2" step="0.5" min="-5" max="5"
+          style="width:80px;text-align:center;font-size:14px;font-weight:700;color:${C.ac}">
+        <div style="font-size:12px;color:${C.mu};flex:1">날씨앱 예보 대비 실제 정산값 차이<br>어제 분석: 날씨앱 20°C → 실제 20°C → 보정 0°C<br>보통 -2~-3°C 적용 권장</div>
+      </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
       <button onclick="autoFetchWeather('${today}')"
