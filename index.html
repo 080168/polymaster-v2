@@ -1663,14 +1663,15 @@ function applyPlayerToBayes(name,info){
    TAB 7: WEATHER BOT (zostaff strategy)
 ══════════════════════════════════════ */
 
-// 11-bin edges for Polymarket temperature markets (°F)
-// User can override per city
+// Seoul °C 구간 (Polymarket Korea weather markets)
+// wState binEdges는 °C 기준으로 재설정
+wState.binEdges=[8,10,12,14,16,18,20,22,24,26,28,30];
 let wState = {
   city:'', date:'', gfsMean:'', gfsStd:'', gfsRange:'',
   ecmwfMean:'', ecmwfStd:'', iconMean:'', iconStd:'',
   nwsText:'', climMean:'', climStd:'',
   yestHigh:'', yestForecast:'', biasPp:'0',
-  binEdges:[50,55,60,65,70,75,80,85,90,95,100,105],
+  binEdges:[8,10,12,14,16,18,20,22,24,26,28,30],
   marketPrices:[], forecast:null, binProbs:[], edges:[],
   resolveTime:'', cityBias:0
 };
@@ -1826,7 +1827,7 @@ async function autoFetchWeather(targetDate){
     wState.ecmwfMean=v[2].toFixed(1);
     wState.city='Seoul'; wState.cityBias=0;
 
-    const agree=spread<=3;
+    const agree=spread<=5; // Seoul 봄철 5°C로 완화
     const sc=agree?C.gr:C.rd;
     const now=new Date();
     const resolveKST=new Date(`${targetDate}T23:59:00+09:00`);
@@ -1919,7 +1920,7 @@ function calc3ModelConsensus(){
   const vals=[gfs,ecmwf,icon].filter(v=>!isNaN(v));
   if(vals.length<2){res.innerHTML='';return}
   const spread=Math.max(...vals)-Math.min(...vals);
-  const agree=spread<=3;
+  const agree=spread<=5; // Seoul 봄철 5°C로 완화
   const center=vals.reduce((a,b)=>a+b,0)/vals.length;
   // Find closest pair
   const pairs=[{a:gfs,b:ecmwf,n:'GFS-ECMWF'},{a:gfs,b:icon,n:'GFS-ICON'},{a:ecmwf,b:icon,n:'ECMWF-ICON'}].filter(p=>!isNaN(p.a)&&!isNaN(p.b));
@@ -1966,30 +1967,44 @@ function check3BinFilter(){
 
 async function runWeatherForecast(){
   if(!getKey()){toast("API 키 필요",C.rd);return}
-  const s=wState;
-  if(!s.city||!s.gfsMean||!s.ecmwfMean){toast("도시·GFS·ECMWF 필수 입력",C.yw);return}
+  // 입력 필드에서 직접 읽기 (wState 캐시 문제 방지)
+  const iconVal = parseFloat(document.getElementById('w-icon-m')?.value) || parseFloat(wState.iconMean) || 0;
+  const gfsVal  = parseFloat(document.getElementById('w-gfs-m')?.value)  || parseFloat(wState.gfsMean)  || 0;
+  const ecmwfVal= parseFloat(document.getElementById('w-ecmwf-m')?.value)|| parseFloat(wState.ecmwfMean)|| 0;
+  const centerVal= ((iconVal+gfsVal+ecmwfVal)/3).toFixed(1);
+  const spreadVal= (Math.max(iconVal,gfsVal,ecmwfVal)-Math.min(iconVal,gfsVal,ecmwfVal)).toFixed(1);
+
+  // 날짜 자동 감지
+  const todayStr=getTodayKST(), tomorrowStr=getTomorrowKST();
+  const dateStr=wState.date||tomorrowStr;
+
+  if(!iconVal&&!gfsVal&&!ecmwfVal){toast('먼저 날씨 데이터를 조회하세요',C.yw);return}
 
   const btn=document.getElementById('w-run-btn');
   const res=document.getElementById('w-result');
   btn.textContent='Claude 분석 중...'; btn.disabled=true;
   res.innerHTML=`<div style="text-align:center;padding:16px"><div class="spin"></div><div style="font-size:10px;color:${C.pu};margin-top:10px">기상 모델 종합 중...</div></div>`;
 
-  const prompt=`You are a meteorological forecaster for ${s.city} on ${s.date||'today'}.
+  // Seoul은 °C 단위
+  const unit='°C';
+  const prompt=`You are a meteorological forecaster for Seoul (Incheon Airport RKSI station) on ${dateStr}.
 
-Inputs:
-- GFS ensemble: mean=${s.gfsMean}°F, std=${s.gfsStd||4}, range=${s.gfsRange||'N/A'}
-- ECMWF ensemble: mean=${s.ecmwfMean}°F, std=${s.ecmwfStd||4}
-- NWS forecast discussion: ${s.nwsText||'No NWS text provided. Use model data only.'}
-- Station climatology: 30-yr mean=${s.climMean||'N/A'}°F, std=${s.climStd||'N/A'}
-- Yesterday high: ${s.yestHigh||'N/A'}°F (forecast was ${s.yestForecast||'N/A'}°F)
-- Recent 14-day forecast bias: ${s.biasPp||0}pp on average
+Inputs (all temperatures in Celsius):
+- ICON model: ${iconVal}°C
+- GFS model: ${gfsVal}°C
+- ECMWF model: ${ecmwfVal}°C
+- Model spread: ${spreadVal}°C
+- Center estimate: ${centerVal}°C
+- Yesterday high: ${wState.yestHigh||'N/A'}°C
+- Recent 14-day forecast bias: ${wState.biasPp||0}pp
+- NWS/KMA notes: ${wState.nwsText||'None provided.'}
 
-Output ONLY a valid JSON object with no extra text:
+Output ONLY a valid JSON object (no markdown, no explanation):
 {
-  "mean": <point estimate °F>,
-  "std": <uncertainty °F>,
-  "reasoning": "<2 sentences on synoptic regime and key risks>",
-  "uhi_adjustment": <pp shift for urban heat island>,
+  "mean": <your best estimate in Celsius as a number>,
+  "std": <uncertainty in Celsius as a number, typically 1-4>,
+  "reasoning": "<2 sentences in Korean>",
+  "uhi_adjustment": 0,
   "regime_uncertainty": "<low|medium|high>"
 }`;
 
@@ -2001,8 +2016,8 @@ Output ONLY a valid JSON object with no extra text:
     const fc=JSON.parse(m[0]);
     wState.forecast=fc;
 
-    const mean=parseFloat(fc.mean), std=parseFloat(fc.std)||4;
-    wState.binProbs=forecastToBinProbs(mean, std, s.binEdges);
+    const mean=parseFloat(fc.mean), std=parseFloat(fc.std)||3;
+    wState.binProbs=forecastToBinProbs(mean, std, wState.binEdges);
 
     // Parse market prices if entered
     const mktInputs=document.querySelectorAll('.w-mkt-price');
@@ -2025,8 +2040,8 @@ Output ONLY a valid JSON object with no extra text:
     <div class="sec" style="border-color:${C.ac}44">
       <div class="stitle" style="color:${C.ac}">🌡 Claude 기상 예측</div>
       <div class="g3" style="margin-bottom:10px">
-        <div class="stat-b"><div class="sv" style="color:${C.ac}">${fc.mean}°F</div><div class="sl">예측값</div></div>
-        <div class="stat-b"><div class="sv" style="color:${C.yw}">±${fc.std}°F</div><div class="sl">불확실성</div></div>
+        <div class="stat-b"><div class="sv" style="color:${C.ac}">${fc.mean}°C</div><div class="sl">예측값</div></div>
+        <div class="stat-b"><div class="sv" style="color:${C.yw}">±${fc.std}°C</div><div class="sl">불확실성</div></div>
         <div class="stat-b"><div class="sv" style="color:${uncColor};font-size:11px">${fc.regime_uncertainty?.toUpperCase()}</div><div class="sl">불확도</div></div>
       </div>
       ${fc.reasoning?`<div style="font-size:10px;color:${C.tx};line-height:1.7;padding:8px;background:var(--p2);border-radius:4px;margin-bottom:8px">💡 ${fc.reasoning}</div>`:''}
@@ -2038,7 +2053,7 @@ Output ONLY a valid JSON object with no extra text:
     <div class="sec">
       <div class="stitle">📊 구간 확률 분포</div>
       ${wState.binProbs.map((p,i)=>{
-        const label=`${s.binEdges[i]}~${s.binEdges[i+1]}°F`;
+        const label=`${wState.binEdges[i]}~${wState.binEdges[i+1]}°C`;
         const mkt=wState.marketPrices[i]||0;
         const edgePp=((p-mkt)*100);
         const barW=Math.round(p*100);
@@ -2071,7 +2086,7 @@ Output ONLY a valid JSON object with no extra text:
       ${core.length===0&&hedges.length===0?`<div style="text-align:center;padding:12px;font-size:11px;color:${C.mu}">SKIP — 10pp 초과 엣지 없음</div>`:
       `${core.map(c=>`<div style="background:${C.gr}0e;border:1px solid ${C.gr}33;border-radius:4px;padding:9px;margin-bottom:6px">
         <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-          <span style="font-size:11px;color:${C.gr};font-weight:700">CORE · 구간 ${s.binEdges[c.bin]}~${s.binEdges[c.bin+1]}°F</span>
+          <span style="font-size:11px;color:${C.gr};font-weight:700">CORE · 구간 ${wState.binEdges[c.bin]}~${wState.binEdges[c.bin+1]}°C</span>
           <span style="font-size:10px;color:${C.gr}">+${c.edgePp}pp</span>
         </div>
         <div class="g3">${kv("모델",((wState.binProbs[c.bin]||0)*100).toFixed(1)+"%")}${kv("시장",((wState.marketPrices[c.bin]||0)*100).toFixed(1)+"%")}${kv("켈리",(c.kelly*100).toFixed(1)+"%",C.ac)}</div>
@@ -2079,7 +2094,7 @@ Output ONLY a valid JSON object with no extra text:
       </div>`).join('')}
       ${hedges.map(h=>`<div style="background:${C.yw}0e;border:1px solid ${C.yw}33;border-radius:4px;padding:9px;margin-bottom:6px">
         <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-          <span style="font-size:11px;color:${C.yw};font-weight:700">HEDGE · 구간 ${s.binEdges[h.bin]}~${s.binEdges[h.bin+1]}°F</span>
+          <span style="font-size:11px;color:${C.yw};font-weight:700">HEDGE · 구간 ${wState.binEdges[h.bin]}~${wState.binEdges[h.bin+1]}°C</span>
           <span style="font-size:9px;color:${C.yw}">${h.type==='extreme'?'극단값':'꼬리'}</span>
         </div>
         <div class="g2">${kv("고정 베팅",(h.stake*100).toFixed(1)+"%")}${kv("베팅액","$"+(bankroll*h.stake).toFixed(0),C.yw)}</div>
