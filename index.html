@@ -1663,9 +1663,6 @@ function applyPlayerToBayes(name,info){
    TAB 7: WEATHER BOT (zostaff strategy)
 ══════════════════════════════════════ */
 
-// Seoul °C 구간 (Polymarket Korea weather markets)
-// wState binEdges는 °C 기준으로 재설정
-wState.binEdges=[8,10,12,14,16,18,20,22,24,26,28,30];
 let wState = {
   city:'', date:'', gfsMean:'', gfsStd:'', gfsRange:'',
   ecmwfMean:'', ecmwfStd:'', iconMean:'', iconStd:'',
