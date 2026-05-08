@@ -1795,17 +1795,36 @@ async function autoFetchWeather(targetDate){
   </div>`;
 
   try{
-    const url=`https://api.open-meteo.com/v1/forecast?latitude=${SEOUL_LAT}&longitude=${SEOUL_LON}&models=icon_seamless,gfs_seamless,ecmwf_ifs025&hourly=temperature_2m_icon_seamless,temperature_2m_gfs_seamless,temperature_2m_ecmwf_ifs025&bias_correction=true&temperature_unit=celsius&start_date=${targetDate}&end_date=${targetDate}&timezone=Asia%2FSeoul`;
+    // Open-Meteo: 각 모델별 hourly temperature 조회
+    const baseUrl='https://api.open-meteo.com/v1/forecast';
+    const params=new URLSearchParams({
+      latitude: SEOUL_LAT,
+      longitude: SEOUL_LON,
+      hourly: 'temperature_2m',
+      temperature_unit: 'celsius',
+      timezone: 'Asia/Seoul',
+      start_date: targetDate,
+      end_date: targetDate,
+      forecast_days: 1
+    });
 
-    const r=await fetch(url,{signal:AbortSignal.timeout(10000)});
-    const data=await r.json();
-    const h=data.hourly;
+    // 3개 모델 개별 호출 (models 파라미터 방식)
+    async function fetchModel(model){
+      const p=new URLSearchParams(params);
+      p.set('models', model);
+      p.set('bias_correction','true');
+      const r=await fetch(`${baseUrl}?${p}`,{signal:AbortSignal.timeout(10000)});
+      const d=await r.json();
+      const temps=(d.hourly?.temperature_2m||[]).filter(v=>v!=null);
+      if(!temps.length)throw new Error(`${model} 데이터 없음`);
+      return Math.max(...temps);
+    }
 
-    if(!h)throw new Error("데이터 없음");
-
-    const iconMax=Math.max(...h.temperature_2m_icon_seamless.filter(v=>v!=null));
-    const gfsMax=Math.max(...h.temperature_2m_gfs_seamless.filter(v=>v!=null));
-    const ecmwfMax=Math.max(...h.temperature_2m_ecmwf_ifs025.filter(v=>v!=null));
+    const [iconMax, gfsMax, ecmwfMax] = await Promise.all([
+      fetchModel('icon_seamless'),
+      fetchModel('gfs_seamless'),
+      fetchModel('ecmwf_ifs025')
+    ]);
     const spread=Math.max(iconMax,gfsMax,ecmwfMax)-Math.min(iconMax,gfsMax,ecmwfMax);
     const center=((iconMax+gfsMax+ecmwfMax)/3);
 
