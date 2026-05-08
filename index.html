@@ -1044,7 +1044,7 @@ function edgeSearch(val){
   sr.style.display='block';sr.innerHTML=`<div style="padding:10px;text-align:center;color:${C.mu};font-size:10px">검색 중...</div>`;
   window._est=setTimeout(async()=>{
     try{
-      const r=await fetch(`https://gamma-api.polymarket.com/markets?active=true&limit=8&order=volume24hr&ascending=false&search=${encodeURIComponent(val)}`,{signal:AbortSignal.timeout(5000)});
+      const r=await fetch(`https://gamma-api.polymarket.com/markets?active=true&limit=8&order=volume24hr&ascending=false&search=${encodeURIComponent(val)}`,{headers:{"Accept":"application/json"}});
       const ms=await r.json();
       if(!ms.length){sr.innerHTML=`<div style="padding:10px;text-align:center;color:${C.mu};font-size:10px">결과 없음</div>`;return}
       window._srData=ms;
@@ -1813,7 +1813,7 @@ async function autoFetchWeather(targetDate){
       const p=new URLSearchParams(params);
       p.set('models', model);
       p.set('bias_correction','true');
-      const r=await fetch(`${baseUrl}?${p}`,{signal:AbortSignal.timeout(10000)});
+      const r=await fetch(`${baseUrl}?${p}`,{headers:{"Accept":"application/json"}});
       const d=await r.json();
       const temps=(d.hourly?.temperature_2m||[]).filter(v=>v!=null);
       if(!temps.length)throw new Error(`${model} 데이터 없음`);
