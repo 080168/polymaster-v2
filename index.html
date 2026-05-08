@@ -1783,6 +1783,102 @@ function calcSniper(){
   </div>`;
 }
 
+// Seoul 인천공항 고정 좌표
+const SEOUL_LAT=37.4691, SEOUL_LON=126.4505;
+
+async function autoFetchWeather(targetDate){
+  const res=document.getElementById('w-auto-result');
+  if(!res)return;
+  res.innerHTML=`<div style="display:flex;align-items:center;gap:8px;padding:10px;color:var(--ac)">
+    <div style="width:14px;height:14px;border:2px solid var(--ac)33;border-top-color:var(--ac);border-radius:50%;animation:spin .7s linear infinite"></div>
+    <span style="font-size:10px;letter-spacing:1px">Open-Meteo 자동 조회 중...</span>
+  </div>`;
+
+  try{
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${SEOUL_LAT}&longitude=${SEOUL_LON}&models=icon_seamless,gfs_seamless,ecmwf_ifs025&hourly=temperature_2m_icon_seamless,temperature_2m_gfs_seamless,temperature_2m_ecmwf_ifs025&bias_correction=true&temperature_unit=celsius&start_date=${targetDate}&end_date=${targetDate}&timezone=Asia%2FSeoul`;
+
+    const r=await fetch(url,{signal:AbortSignal.timeout(10000)});
+    const data=await r.json();
+    const h=data.hourly;
+
+    if(!h)throw new Error("데이터 없음");
+
+    const iconMax=Math.max(...h.temperature_2m_icon_seamless.filter(v=>v!=null));
+    const gfsMax=Math.max(...h.temperature_2m_gfs_seamless.filter(v=>v!=null));
+    const ecmwfMax=Math.max(...h.temperature_2m_ecmwf_ifs025.filter(v=>v!=null));
+    const spread=Math.max(iconMax,gfsMax,ecmwfMax)-Math.min(iconMax,gfsMax,ecmwfMax);
+    const center=((iconMax+gfsMax+ecmwfMax)/3);
+
+    // 상태 저장
+    wState.iconMean=iconMax.toFixed(1);
+    wState.gfsMean=gfsMax.toFixed(1);
+    wState.ecmwfMean=ecmwfMax.toFixed(1);
+    wState.city='Seoul';
+    wState.cityBias=0;
+
+    const agree=spread<=3;
+    const spreadColor=agree?C.gr:C.rd;
+    const now=new Date();
+    // 정산시각: targetDate 23:59 KST
+    const resolveKST=new Date(`${targetDate}T23:59:00+09:00`);
+    const hoursLeft=(resolveKST-now)/3600000;
+    const inWindow=hoursLeft>=18&&hoursLeft<=30;
+    const winColor=inWindow?C.gr:hoursLeft<18?C.rd:C.yw;
+    const winMsg=inWindow?`✅ 진입 윈도우 내 (${hoursLeft.toFixed(1)}h 남음)`:hoursLeft<18?`❌ 너무 늦음 (${hoursLeft.toFixed(1)}h) — 내일 마켓 확인`:` ⚠ 아직 이름 (${hoursLeft.toFixed(1)}h) — 재확인 필요`;
+
+    res.innerHTML=`<div class="fade">
+    <div style="background:var(--p2);border-radius:6px;padding:10px;margin-bottom:8px">
+      <div style="font-size:9px;color:${C.mu};letter-spacing:2px;margin-bottom:8px">🌡 ${targetDate} SEOUL (인천공항 RKSI)</div>
+      <div class="g3" style="margin-bottom:8px">
+        ${kv("ICON",iconMax.toFixed(1)+"°C",C.ac)}
+        ${kv("GFS",gfsMax.toFixed(1)+"°C",C.yw)}
+        ${kv("ECMWF",ecmwfMax.toFixed(1)+"°C",C.pu)}
+      </div>
+      <div class="g2">
+        ${kv("중심값",center.toFixed(1)+"°C",C.br)}
+        ${kv("Spread",spread.toFixed(1)+"°C",spreadColor)}
+      </div>
+    </div>
+    <div style="padding:8px;background:${spreadColor}18;border:1px solid ${spreadColor}44;border-radius:4px;margin-bottom:6px">
+      <div style="font-size:10px;color:${spreadColor};font-weight:700">${agree?`✅ 3-모델 합의 (spread ${spread.toFixed(1)}°C)`:`❌ SKIP — 모델 분산 ${spread.toFixed(1)}°C > 3°C`}</div>
+    </div>
+    <div style="padding:8px;background:${winColor}18;border:1px solid ${winColor}44;border-radius:4px;margin-bottom:8px">
+      <div style="font-size:10px;color:${winColor};font-weight:700">${winMsg}</div>
+    </div>
+    ${agree&&inWindow?`
+    <div style="padding:8px;background:${C.gr}0e;border:1px solid ${C.gr}33;border-radius:4px;margin-bottom:8px;font-size:10px;color:${C.gr}">
+      🎯 진입 조건 충족 — 폴리마켓에서 ${center.toFixed(0)}°C 전후 구간 가격 확인 후 4번 필터 입력
+    </div>`:''}
+    <button onclick="autoFetchWeather('${targetDate}')" style="width:100%;padding:7px;background:var(--ac)18;border:1px solid var(--ac)44;border-radius:4px;color:var(--ac);font-family:var(--fn);font-size:9px;cursor:pointer;letter-spacing:1px">🔄 재조회</button>
+    </div>`;
+
+    // 필드 자동 입력
+    ['w-icon-m','w-gfs-m','w-ecmwf-m'].forEach((id,i)=>{
+      const el=document.getElementById(id);
+      if(el)el.value=[iconMax,gfsMax,ecmwfMax][i].toFixed(1);
+    });
+    calc3ModelConsensus();
+
+    toast(`자동 조회 완료 — 중심값 ${center.toFixed(1)}°C`,C.gr);
+  }catch(e){
+    res.innerHTML=`<div style="padding:10px;background:${C.rd}18;border:1px solid ${C.rd}44;border-radius:4px">
+      <div style="font-size:10px;color:${C.rd};margin-bottom:6px">⚠ 조회 실패: ${e.message}</div>
+      <div style="font-size:9px;color:${C.mu}">네트워크 확인 후 재시도하세요</div>
+      <button onclick="autoFetchWeather('${targetDate}')" style="margin-top:8px;width:100%;padding:6px;background:${C.rd}18;border:1px solid ${C.rd}44;border-radius:3px;color:${C.rd};font-family:var(--fn);font-size:9px;cursor:pointer">재시도</button>
+    </div>`;
+  }
+}
+
+function getTodayKST(){
+  const d=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Seoul'}));
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function getTomorrowKST(){
+  const d=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Seoul'}));
+  d.setDate(d.getDate()+1);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
 function selectWeatherCity(name){
   const c=WEATHER_CITIES[name];if(!c)return;
   wState.city=name; wState.cityBias=c.bias||0;
@@ -2043,268 +2139,140 @@ function renderWeatherTab(){
   const el=document.getElementById('tab-weather');
   const bins=wState.binEdges;
   const nbins=bins.length-1;
-  const cityInfo=WEATHER_CITIES[wState.city];
+  const today=getTodayKST();
+  const tomorrow=getTomorrowKST();
+  // Auto-set Seoul
+  wState.city='Seoul'; wState.cityBias=0;
 
   el.innerHTML=`<div class="fade" style="padding:12px">
 
   <!-- HEADER -->
   <div style="background:${C.ac}0a;border:1px solid ${C.ac}22;border-radius:7px;padding:10px 12px;margin-bottom:10px">
-    <div style="font-size:10px;color:${C.ac};font-weight:700;letter-spacing:2px;margin-bottom:2px">WEATHER MARKET BOT</div>
-    <div style="font-size:9px;color:${C.mu};line-height:1.6">zostaff + Paruchh v3 · 3모델 합의 · 18~30h 진입 · 3-빈 전략</div>
+    <div style="font-size:10px;color:${C.ac};font-weight:700;letter-spacing:2px;margin-bottom:2px">WEATHER BOT — SEOUL</div>
+    <div style="font-size:9px;color:${C.mu};line-height:1.6">인천공항(RKSI) 고정 · Open-Meteo 자동조회 · 정산 24:00 KST</div>
   </div>
 
-  <!-- ① CITY PICKER — Paruchh 검증 좌표 -->
-  <div class="sec" style="border-color:${C.rd}33">
-    <div class="stitle" style="color:${C.rd}">① 도시 선택 — 관측소 좌표 (CRITICAL)</div>
-    <div style="font-size:9px;color:${C.mu};margin-bottom:8px;line-height:1.6">
-      ⚠ Polymarket은 도심이 아닌 <b style="color:${C.yw}">특정 기상관측소</b>를 기준으로 정산.<br>잘못된 좌표 = 매일 손실 (Paruchh v1~v2 실패 원인)
+  <!-- ① AUTO FETCH -->
+  <div class="sec" style="border-color:${C.gr}33">
+    <div class="stitle" style="color:${C.gr}">① 날씨 데이터 자동 조회</div>
+    <div style="font-size:9px;color:${C.mu};margin-bottom:10px;line-height:1.6">
+      📍 Seoul 인천공항(RKSI) · bias_correction=true<br>
+      ICON · GFS · ECMWF 3모델 동시 조회 → 자동 계산
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">
-      ${Object.entries(WEATHER_CITIES).map(([name,c])=>`
-      <button onclick="selectWeatherCity('${name}')" style="padding:4px 9px;background:${wState.city===name?C.ac:'transparent'};border:1px solid ${wState.city===name?C.ac:C.mu+'66'};border-radius:3px;color:${wState.city===name?'#000':C.tx};font-family:var(--fn);font-size:9px;cursor:pointer">${name}</button>`).join('')}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <button onclick="autoFetchWeather('${today}')"
+        style="padding:10px;background:${C.ac}18;border:1px solid ${C.ac}44;border-radius:5px;color:${C.ac};font-family:var(--fn);font-size:10px;cursor:pointer;font-weight:700">
+        📅 오늘 (${today})
+      </button>
+      <button onclick="autoFetchWeather('${tomorrow}')"
+        style="padding:10px;background:${C.gr}18;border:1px solid ${C.gr}44;border-radius:5px;color:${C.gr};font-family:var(--fn);font-size:10px;cursor:pointer;font-weight:700">
+        📅 내일 (${tomorrow})
+      </button>
     </div>
-    ${cityInfo?`<div style="background:${C.gr}0e;border:1px solid ${C.gr}33;border-radius:4px;padding:8px">
-      <div style="font-size:10px;color:${C.gr};font-weight:700;margin-bottom:5px">📍 ${wState.city} — ${cityInfo.station}</div>
-      <div class="g2">
-        ${kv("위도",cityInfo.lat)}${kv("경도",cityInfo.lon)}
-      </div>
-      <div style="font-size:9px;color:${C.yw};margin-top:4px">⚠ ${cityInfo.note}</div>
-      ${cityInfo.unit==="C"?`<div style="font-size:9px;color:${C.mu};margin-top:3px">단위: °C (폴리마켓 정산)</div>`:''}
-      ${cityInfo.bias?`<div style="font-size:9px;color:${C.yw};margin-top:3px">🌡 도시 편향 보정: +${cityInfo.bias}°C 자동 적용</div>`:''}
-    </div>`:`<div style="font-size:9px;color:${C.mu};text-align:center;padding:8px">위 버튼에서 도시를 선택하거나 아래에 직접 입력</div>`}
-    <div class="g2" style="margin-top:8px">
-      <div><div style="font-size:9px;color:${C.mu};margin-bottom:3px">도시명</div>
-        <input id="w-city" placeholder="직접 입력..." value="${wState.city}" oninput="wState.city=this.value"></div>
-      <div><div style="font-size:9px;color:${C.mu};margin-bottom:3px">날짜</div>
-        <input id="w-date" type="date" value="${wState.date}" oninput="wState.date=this.value"></div>
+    <div id="w-auto-result">
+      <div style="text-align:center;font-size:9px;color:${C.mu};padding:8px">위 버튼을 눌러 자동 조회하세요</div>
     </div>
   </div>
 
-  <!-- ② ENTRY WINDOW CHECK -->
-  <div class="sec" style="border-color:${C.yw}33">
-    <div class="stitle" style="color:${C.yw}">② 진입 윈도우 확인 (18~30h)</div>
-    <div style="font-size:9px;color:${C.mu};margin-bottom:8px;line-height:1.6">
-      18h 이전 = 시장이 이미 가격 반영 (엣지 없음) · 30h 이후 = 모델 부정확<br>
-      <b style="color:${C.gr}">18~30h 스윗스팟</b>에서만 진입 (Paruchh v3 핵심)
-    </div>
-    <div style="margin-bottom:8px">
-      <div style="font-size:9px;color:${C.mu};margin-bottom:3px">정산 시각 (현지 시간 UTC)</div>
-      <input type="datetime-local" id="w-resolve-time" value="${wState.resolveTime}" oninput="wState.resolveTime=this.value;checkEntryWindow()">
-    </div>
-    <div id="w-window-res"><div style="font-size:9px;color:${C.mu};text-align:center;padding:6px">정산 시각 입력 시 자동 계산</div></div>
-  </div>
-
-  <!-- ③ 3-MODEL CONSENSUS -->
+  <!-- ② 3-MODEL RESULT (자동 입력됨) -->
   <div class="sec">
-    <div class="stitle">③ 3-모델 합의 (ICON · GFS · ECMWF)</div>
-    <div style="font-size:9px;color:${C.mu};margin-bottom:8px;line-height:1.6">
-      Spread > 3°C → <b style="color:${C.rd}">전면 SKIP</b> (모델이 모른다 = 우리도 모름)<br>
-      2개 이상 합의 (1°C 이내) → 아웃라이어 제외 후 진입
-    </div>
+    <div class="stitle">② 3-모델 수치 (자동 입력)</div>
+    <div style="font-size:9px;color:${C.mu};margin-bottom:8px">자동 조회 후 자동 입력됨 · 수동 수정 가능</div>
     <div class="g3" style="margin-bottom:8px">
-      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">ICON (°)</div>
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">ICON (°C)</div>
         <input type="number" id="w-icon-m" value="${wState.iconMean}" oninput="wState.iconMean=this.value;calc3ModelConsensus()" style="text-align:center"></div>
-      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">GFS (°)</div>
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">GFS (°C)</div>
         <input type="number" id="w-gfs-m" value="${wState.gfsMean}" oninput="wState.gfsMean=this.value;calc3ModelConsensus()" style="text-align:center"></div>
-      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">ECMWF (°)</div>
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">ECMWF (°C)</div>
         <input type="number" id="w-ecmwf-m" value="${wState.ecmwfMean}" oninput="wState.ecmwfMean=this.value;calc3ModelConsensus()" style="text-align:center"></div>
     </div>
     <div id="w-consensus-res"></div>
   </div>
 
-  <!-- ④ 3-BIN PRICE FILTER -->
+  <!-- ③ 3-BIN PRICE FILTER -->
   <div class="sec" style="border-color:${C.gr}33">
-    <div class="stitle" style="color:${C.gr}">④ 3-빈 가격 필터</div>
+    <div class="stitle" style="color:${C.gr}">③ 3-빈 가격 필터</div>
     <div style="font-size:9px;color:${C.mu};margin-bottom:8px;line-height:1.6">
-      중심 + 인접 2개 구간에 분산 베팅. 3가지 조건 모두 통과 시만 진입.<br>
+      폴리마켓에서 Seoul 날씨 마켓 열기 → 중심 구간 ±1개 가격 입력<br>
       <span style="color:${C.gr}">합계 ≤ 0.95</span> · <span style="color:${C.yw}">각 빈 ≥ 0.01</span> · <span style="color:${C.ac}">각 빈 ≤ 0.45</span>
     </div>
     <div class="g3" style="margin-bottom:8px">
       ${['하단 인접','중심 빈','상단 인접'].map((label,i)=>`<div>
         <div style="font-size:8px;color:${i===1?C.ac:C.mu};margin-bottom:3px">${label}</div>
-        <input type="number" class="w3-bin-price" step="0.01" min="0" max="1" placeholder="${['0.08','0.15','0.10'][i]}" oninput="check3BinFilter()" style="text-align:center;${i===1?`border-color:${C.ac}55`:''}"
-        ></div>`).join('')}
+        <input type="number" class="w3-bin-price" step="0.01" min="0" max="1"
+          placeholder="${['0.08','0.15','0.10'][i]}" oninput="check3BinFilter()"
+          style="text-align:center;${i===1?`border-color:${C.ac}55`:''}">
+        </div>`).join('')}
     </div>
     <div id="w3-filter-res"></div>
   </div>
 
-  <!-- ⑤ DETAILED WEATHER DATA -->
+  <!-- ④ CLAUDE 예측 -->
   <div class="sec">
-    <div class="stitle">⑤ 상세 기상 데이터 (Claude 분석용)</div>
-    <div class="g3" style="margin-bottom:8px">
-      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">GFS Std</div>
-        <input type="number" id="w-gfs-s" value="${wState.gfsStd}" oninput="wState.gfsStd=this.value" placeholder="4" style="text-align:center"></div>
-      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">ECMWF Std</div>
-        <input type="number" id="w-ecmwf-s" value="${wState.ecmwfStd}" oninput="wState.ecmwfStd=this.value" placeholder="4" style="text-align:center"></div>
-      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">GFS 범위</div>
-        <input id="w-gfs-r" value="${wState.gfsRange}" oninput="wState.gfsRange=this.value" placeholder="68-82" style="text-align:center"></div>
-    </div>
+    <div class="stitle">④ Claude 기상 예측 (상세)</div>
+    <div style="font-size:9px;color:${C.mu};margin-bottom:8px">NWS 토론문 입력 시 정확도 향상 (선택)</div>
     <div class="g2" style="margin-bottom:8px">
-      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">어제 실제(°)</div>
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">어제 실제(°C)</div>
         <input type="number" id="w-yest-h" value="${wState.yestHigh}" oninput="wState.yestHigh=this.value" style="text-align:center"></div>
-      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">어제 예보(°)</div>
-        <input type="number" id="w-yest-f" value="${wState.yestForecast}" oninput="wState.yestForecast=this.value" style="text-align:center"></div>
-    </div>
-    <div class="g3">
-      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">기후 평균(°)</div>
-        <input type="number" id="w-clim-m" value="${wState.climMean}" oninput="wState.climMean=this.value" style="text-align:center"></div>
-      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">기후 Std</div>
-        <input type="number" id="w-clim-s" value="${wState.climStd}" oninput="wState.climStd=this.value" style="text-align:center"></div>
       <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">14일 편향(pp)</div>
         <input type="number" id="w-bias" value="${wState.biasPp}" oninput="wState.biasPp=this.value" placeholder="0" style="text-align:center"></div>
     </div>
+    <textarea id="w-nws" rows="2" placeholder="NWS 예보 토론 텍스트 (선택)..." oninput="wState.nwsText=this.value" style="margin-bottom:8px">${wState.nwsText}</textarea>
+    <button id="w-run-btn" class="btn btn-ac" onclick="runWeatherForecast()">Claude 기상 예측 실행</button>
   </div>
-
-  <!-- NWS TEXT -->
-  <div class="sec">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-      <div class="stitle" style="margin:0">NWS 예보 토론문</div>
-      <a href="https://www.weather.gov/forecastdiscussions" target="_blank" style="font-size:9px;color:${C.ac};text-decoration:none">↗ NWS</a>
-    </div>
-    <textarea id="w-nws" rows="3" placeholder="기상청 예보 토론 텍스트 붙여넣기 (선택)..." oninput="wState.nwsText=this.value">${wState.nwsText}</textarea>
-  </div>
-
-  <!-- MARKET PRICES (zostaff bin distribution) -->
-  <div class="sec">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <div class="stitle" style="margin:0">폴리마켓 시장가격 (구간별)</div>
-      <a href="https://polymarket.com/sports/weather" target="_blank" style="font-size:9px;color:${C.ac};text-decoration:none">↗ PM</a>
-    </div>
-    <div style="font-size:9px;color:${C.mu};margin-bottom:8px">zostaff KL-분포 분석용 · 각 구간 Yes 가격 (0~1)</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-      ${Array.from({length:nbins},(_,i)=>`<div>
-        <div style="font-size:8px;color:${C.mu};margin-bottom:2px">${bins[i]}~${bins[i+1]}°F</div>
-        <input type="number" class="w-mkt-price" step="0.01" min="0" max="1" placeholder="0.05" value="${wState.marketPrices[i]||''}" style="text-align:center;font-size:11px">
-      </div>`).join('')}
-    </div>
-  </div>
-
-  <!-- RUN BUTTON -->
-  <button id="w-run-btn" class="btn btn-ac" style="margin-bottom:10px" onclick="runWeatherForecast()">Claude 기상 예측 실행 (zostaff 전략)</button>
 
   <!-- RESULT -->
   <div id="w-result"></div>
 
-  <!-- KELLY REF + RISK -->
-  <div class="sec" style="margin-top:4px">
-    <div class="stitle">📐 켈리 참조 계산기</div>
-    <div class="g2" style="margin-bottom:8px">
-      <div><div style="font-size:9px;color:${C.mu};margin-bottom:3px">모델 확률 (%)</div>
-        <input type="number" id="kc-model" placeholder="65" min="1" max="99" oninput="calcKellyRef()"></div>
-      <div><div style="font-size:9px;color:${C.mu};margin-bottom:3px">시장 가격 ($)</div>
-        <input type="number" id="kc-mkt" placeholder="0.45" step="0.01" min="0.01" max="0.99" oninput="calcKellyRef()"></div>
-    </div>
-    <div id="kc-res" style="font-size:10px;color:${C.mu};text-align:center">값 입력 시 계산</div>
-  </div>
-
-  <!-- PARUCHH SCARS (오류 방지) -->
-  <div class="sec" style="border-color:${C.rd}22">
-    <div class="stitle" style="color:${C.rd}">⚠ Paruchh 실패 교훈 (v1~v2 손실 $63)</div>
-    ${[
-      ["좌표 오류","도시 중심이 아닌 관측소 좌표 사용. ICAO 코드 ≠ 정확한 좌표","위 도시 선택기 사용"],
-      ["진입 타이밍","6~12h 전 = 이미 가격 반영. 18~30h 진입 필수","진입 윈도우 체크"],
-      ["단일 모델","GFS 하나만 = 아웃라이어에 취약. 3모델 합의 필수","3-모델 합의 확인"],
-      ["단일 빈","1개 빈 = 1°C 미스 → 전액 손실. 3개 인접 빈 분산","3-빈 필터 통과시만"],
-      ["HK 계절편향","5~9월 홍콩: 모델이 1°C 낮게 예측하는 경향","+1°C 도시 보정 자동"],
-    ].map(([t,d,f])=>`<div style="padding:7px 0;border-bottom:1px solid var(--bd)55">
-      <div style="display:flex;justify-content:space-between;margin-bottom:2px">
-        <span style="font-size:10px;color:var(--br);font-weight:700">${t}</span>
-        <span style="font-size:8px;padding:1px 5px;background:${C.gr}18;border:1px solid ${C.gr}44;border-radius:2px;color:${C.gr}">${f}</span>
-      </div>
-      <div style="font-size:9px;color:${C.mu}">${d}</div>
-    </div>`).join('')}
-  </div>
-
-  <!-- ⑥ TAIL-BIN SNIPER (ColdMath / BeefSlayer 전략) -->
+  <!-- ⑤ TAIL-BIN SNIPER -->
   <div class="sec" style="border-color:${C.pu}33">
-    <div class="stitle" style="color:${C.pu}">⑥ 꼬리빈 스나이퍼 (ColdMath 전략)</div>
-    <div style="font-size:9px;color:${C.mu};margin-bottom:8px;line-height:1.6">시장이 0.01~0.05¢에 방치한 극단 구간에 진입 → 적중 시 수천 % 수익.<br>ColdMath: $25→$12,452(+49,733%) · BeefSlayer: $6→$2,990(+49,745%)</div>
+    <div class="stitle" style="color:${C.pu}">⑤ 꼬리빈 스나이퍼 (ColdMath 전략)</div>
+    <div style="font-size:9px;color:${C.mu};margin-bottom:8px">시장가 ≤ 5¢ 극단 구간 · 수천% 배율 기회 계산</div>
     <div class="g3" style="margin-bottom:8px">
-      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">시장가격 ($)</div>
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">시장가격($)</div>
         <input type="number" id="sniper-mkt" step="0.001" placeholder="0.02" min="0.001" max="0.20" oninput="calcSniper()" style="text-align:center"></div>
-      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">모델 확률 (%)</div>
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">모델확률(%)</div>
         <input type="number" id="sniper-model" placeholder="8" min="0.1" max="50" oninput="calcSniper()" style="text-align:center"></div>
-      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">베팅액 ($)</div>
+      <div><div style="font-size:8px;color:${C.mu};margin-bottom:3px">베팅액($)</div>
         <input type="number" id="sniper-bet" placeholder="25" min="1" oninput="calcSniper()" style="text-align:center"></div>
     </div>
-    <div id="sniper-result" style="font-size:10px;color:${C.mu};text-align:center;padding:6px">값 입력 시 계산</div>
+    <div id="sniper-result" style="font-size:10px;color:${C.mu};text-align:center;padding:4px">값 입력 시 계산</div>
   </div>
 
-  <!-- ⑦ TOP 7 트레이더 레퍼런스 -->
-  <div class="sec">
-    <div class="stitle">🏆 Top 7 날씨 트레이더 전략</div>
-    <div style="font-size:9px;color:${C.mu};margin-bottom:10px">PolymarketSuccubus 랭킹 · 전략 패턴 참조용</div>
+  <!-- ⑥ TOP 7 참조 (접기) -->
+  <details style="margin-bottom:10px">
+    <summary style="font-size:9px;letter-spacing:2px;color:${C.mu};cursor:pointer;padding:8px;background:var(--panel);border:1px solid var(--bd);border-radius:5px">🏆 TOP 7 트레이더 전략 참조</summary>
+    <div style="margin-top:6px">
     ${[
-      {rank:1,name:"ColdMath",      pnl:"+$124,896",wr:"81.7%",city:"Tokyo·Chicago·Wellington",note:"Clawdbot 자동화 · 0.01¢ 꼬리빈 · 24/7 스캔",col:C.yw},
-      {rank:2,name:"VibeTrader",    pnl:"+$132,854",wr:"37.7%",city:"NYC·Miami·이벤트",         note:"날씨+이벤트 분산 · 저가 진입 · 낮은 승률 고배율",col:C.ac},
-      {rank:3,name:"BeefSlayer",    pnl:"+$62,064", wr:"68.2%",city:"Seattle·Atlanta·NYC",      note:"극저가 진입 · $6→$2,990 · 과소평가 구간 탐지",col:C.gr},
-      {rank:4,name:"HenryAtmoPhD", pnl:"+$55,838", wr:"36.5%",city:"Seoul·NYC·London",         note:"대기과학 교수 · 기후 데이터 + 과학적 확률",col:C.pu},
-      {rank:5,name:"HondaCivic",    pnl:"+$55,408", wr:"84.2%",city:"HK·NYC·London·BA",        note:"최저가 진입 $37→$15,182 · 84% 승률 최고",col:C.gr},
-      {rank:6,name:"russell110320", pnl:"+$43,936", wr:"64.3%",city:"전지구 온도 기록",          note:"월별 전지구 기온 이상 마켓 · 장기 기후 데이터",col:C.ac},
-      {rank:7,name:"Maskache2",     pnl:"+$34,106", wr:"33.5%",city:"Seoul·HK·Wellington",     note:"소수 도시 집중 · 역사 데이터 + 예보 오류 탐지",col:C.mu},
-    ].map(t=>`<div style="background:var(--p2);border-radius:5px;padding:9px;margin-bottom:6px;border-left:3px solid ${t.col}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
-        <div><span style="font-size:10px;color:${t.col};font-weight:700;margin-right:5px">#${t.rank}</span><span style="font-size:11px;color:var(--br);font-weight:700">${t.name}</span></div>
-        <div style="text-align:right"><div style="font-size:11px;color:${C.gr};font-weight:700">${t.pnl}</div><div style="font-size:8px;color:${C.mu}">승률 ${t.wr}</div></div>
-      </div>
-      <div style="font-size:9px;color:${C.ac};margin-bottom:2px">🌍 ${t.city}</div>
-      <div style="font-size:9px;color:${C.mu}">${t.note}</div>
+      {rank:1,name:"ColdMath",      pnl:"+$124,896",wr:"81.7%",note:"0.01¢ 꼬리빈 자동봇",col:C.yw},
+      {rank:2,name:"VibeTrader",    pnl:"+$132,854",wr:"37.7%",note:"날씨+이벤트 분산",col:C.ac},
+      {rank:3,name:"BeefSlayer",    pnl:"+$62,064", wr:"68.2%",note:"US 도시 스나이퍼",col:C.gr},
+      {rank:5,name:"HondaCivic",    pnl:"+$55,408", wr:"84.2%",note:"최저가 진입 전문",col:C.gr},
+      {rank:7,name:"Maskache2",     pnl:"+$34,106", wr:"33.5%",note:"Seoul 집중 전략",col:C.pu},
+    ].map(t=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:var(--p2);border-radius:4px;margin-bottom:4px;border-left:2px solid ${t.col}">
+      <div><span style="font-size:9px;color:${t.col};font-weight:700;margin-right:5px">#${t.rank}</span><span style="font-size:10px;color:var(--br)">${t.name}</span></div>
+      <div style="text-align:right"><div style="font-size:10px;color:${C.gr}">${t.pnl}</div><div style="font-size:8px;color:${C.mu}">${t.wr} · ${t.note}</div></div>
     </div>`).join('')}
-  </div>
-
-  <!-- 도시별 수익 집중도 -->
-  <div class="sec">
-    <div class="stitle">🌏 도시별 수익 집중도</div>
-    <div style="font-size:9px;color:${C.mu};margin-bottom:8px">Top 7 트레이더 공통 수익 도시 · 관측소 주의사항</div>
-    ${[
-      {city:"Seoul (RKSI)",    score:95,note:"Maskache2·HenryPhD 주력 · 봄 기온 변동 큼",  warn:"인천공항"},
-      {city:"NYC (KLGA)",      score:90,note:"3명 이상 공통 수익처",                         warn:"LaGuardia"},
-      {city:"Hong Kong (HKO)",score:80,note:"HondaCivic 최대 수익 · 계절 편향 주의",        warn:"+1°C 보정"},
-      {city:"London (EGLC)",  score:75,note:"HenryPhD·HondaCivic 겨울 전략",               warn:"London City"},
-      {city:"Wellington",      score:70,note:"ColdMath 주요 수익처",                         warn:"남반구 계절"},
-      {city:"Tokyo (RJTT)",   score:65,note:"ColdMath 최대 단일 수익 $12,427",              warn:"하네다 필수"},
-      {city:"Chicago (KORD)", score:60,note:"BeefSlayer·ColdMath 냉기 구간",               warn:"O'Hare"},
-    ].map(c=>{
-      const col=c.score>=85?C.gr:c.score>=70?C.ac:C.yw;
-      return`<div style="margin-bottom:7px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
-          <span style="font-size:10px;color:var(--br);font-weight:700">${c.city}</span>
-          <span style="font-size:8px;padding:1px 5px;background:${C.rd}18;border:1px solid ${C.rd}33;border-radius:2px;color:${C.rd}">${c.warn}</span>
-        </div>
-        <div style="height:5px;background:var(--bd);border-radius:3px;overflow:hidden;margin-bottom:3px">
-          <div style="height:100%;width:${c.score}%;background:${col};border-radius:3px"></div>
-        </div>
-        <div style="font-size:8px;color:${C.mu}">${c.note}</div>
-      </div>`;
-    }).join('')}
-  </div>
-
-  <!-- SOURCES -->
-  <div class="sec" style="border-color:${C.pu}22">
-    <div class="stitle" style="color:${C.pu}">🔗 데이터 소스</div>
-    <div style="display:flex;flex-wrap:wrap;gap:5px">
-      <a href="https://api.open-meteo.com/v1/forecast?bias_correction=true" target="_blank" class="el">Open-Meteo API</a>
-      <a href="https://www.weather.gov/forecastdiscussions" target="_blank" class="el">NWS 토론</a>
-      <a href="https://www.pivotalweather.com/model.php?m=gfs" target="_blank" class="el">GFS 앙상블</a>
-      <a href="https://charts.ecmwf.int/" target="_blank" class="el">ECMWF</a>
-      <a href="https://polymarket.com/sports/weather" target="_blank" class="el el-pu">폴리마켓 날씨</a>
-      <a href="https://github.com/ventry089/weatherbot" target="_blank" class="el el-pu">ventry089</a>
     </div>
-    <div style="margin-top:8px;font-size:9px;color:${C.mu}">Open-Meteo: <code style="color:${C.ac}">bias_correction=true</code> 파라미터 필수 — 관측소 로컬 보정 +30~40% 정확도</div>
-  </div>
+  </details>
 
   <!-- CF LINK -->
   <div class="sec" style="border-color:${C.yw}22">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <div style="font-size:10px;color:${C.tx}">🔬 반사실 분석 (exit 효율 · ventry089 패턴)</div>
+      <div style="font-size:10px;color:${C.tx}">🔬 반사실 분석 (exit 효율)</div>
       <button onclick="go('cf',null)" style="padding:4px 10px;background:${C.yw}18;border:1px solid ${C.yw}44;border-radius:3px;color:${C.yw};font-family:var(--fn);font-size:9px;cursor:pointer">이동 →</button>
     </div>
   </div>
 
   </div>`;
 
-  // Auto-run calculations if data exists
-  setTimeout(()=>{calc3ModelConsensus();checkEntryWindow();check3BinFilter();},100);
+  // 자동 계산
+  setTimeout(()=>{
+    calc3ModelConsensus();
+    check3BinFilter();
+    // 데이터 있으면 자동 조회
+    if(!wState.iconMean) autoFetchWeather(tomorrow);
+  },100);
 }
 
 /* ══════════════════════════════════════
