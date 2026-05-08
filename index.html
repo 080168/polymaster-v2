@@ -1858,6 +1858,8 @@ function check3BinFilter(){
     ${pass?`<div style="margin-top:6px;font-size:9px;color:${C.mu}">예상 ROI = (1 - 합계) / 합계 × 100 = <b style="color:${C.gr}">+${((1-sum)/sum*100).toFixed(1)}%</b></div>`:''}
   </div>`;
 }
+
+async function runWeatherForecast(){
   if(!getKey()){toast("API 키 필요",C.rd);return}
   const s=wState;
   if(!s.city||!s.gfsMean||!s.ecmwfMean){toast("도시·GFS·ECMWF 필수 입력",C.yw);return}
