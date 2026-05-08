@@ -1744,6 +1744,87 @@ function selectTrades(modelProbs, marketProbs, modelStd, baseStd=8){
   return {core, hedges, highUnc};
 }
 
+function addBinRow(){
+  const c=document.getElementById('bin-rows');if(!c)return;
+  const d=document.createElement('div');
+  d.className='bin-row';
+  d.style.cssText='background:var(--p2);border-radius:5px;padding:8px;margin-bottom:6px';
+  d.innerHTML=`<div style="display:grid;grid-template-columns:60px 1fr 1fr 1fr;gap:6px;align-items:end;margin-bottom:6px">
+    <div><div style="font-size:12px;color:var(--mu);margin-bottom:2px">구간</div>
+      <input class="br-temp" placeholder="20°C" style="text-align:center;font-size:13px;font-weight:700;color:var(--br)"></div>
+    <div><div style="font-size:12px;color:var(--mu);margin-bottom:2px">시장가($)</div>
+      <input type="number" class="br-mkt" placeholder="0.19" step="0.001" min="0.001" oninput="calcBinRows()" style="text-align:center"></div>
+    <div><div style="font-size:12px;color:var(--mu);margin-bottom:2px">모델확률(%)</div>
+      <input type="number" class="br-model" placeholder="10" min="0.1" max="99" oninput="calcBinRows()" style="text-align:center"></div>
+    <div><div style="font-size:12px;color:var(--mu);margin-bottom:2px">베팅액($)</div>
+      <input type="number" class="br-bet" placeholder="10" min="1" oninput="calcBinRows()" style="text-align:center"></div>
+  </div>
+  <div class="br-result" style="font-size:12px;color:var(--mu)">입력 후 자동 계산</div>`;
+  c.appendChild(d);
+}
+
+function calcBinRows(){
+  const rows=document.querySelectorAll('.bin-row');
+  let totalBet=0, totalPay=0, totalMktSum=0;
+  const results=[];
+
+  rows.forEach(row=>{
+    const temp=row.querySelector('.br-temp')?.value||'?';
+    const mkt=parseFloat(row.querySelector('.br-mkt')?.value)||0;
+    const model=parseFloat(row.querySelector('.br-model')?.value)||0;
+    const bet=parseFloat(row.querySelector('.br-bet')?.value)||0;
+    const resEl=row.querySelector('.br-result');
+
+    if(!mkt||!bet){if(resEl)resEl.innerHTML='<span style="color:var(--mu)">값 입력 시 계산</span>';return;}
+
+    const multiplier=(1/mkt).toFixed(1);
+    const payout=(bet/mkt).toFixed(2);
+    const profit=(bet/mkt-bet).toFixed(2);
+    const roi=((profit/bet)*100).toFixed(0);
+    const modelP=model/100;
+    const kl=modelP>0&&mkt>0?klDivBinary(modelP,mkt):0;
+    const ev=modelP>0?(modelP*(1-mkt)-(1-modelP)*mkt).toFixed(4):null;
+    const klColor=kl>=0.10?C.gr:kl>=0.05?C.yw:C.rd;
+    const klVerdict=kl>=0.10?'BUY':kl>=0.05?'WAIT':'SKIP';
+
+    totalBet+=bet;
+    totalPay+=parseFloat(payout);
+    totalMktSum+=mkt;
+    results.push({temp,mkt,model,bet,profit,roi,kl,ev,klVerdict,klColor});
+
+    if(resEl)resEl.innerHTML=`
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px">
+        <div><div style="font-size:11px;color:var(--mu)">배율</div><div style="font-size:14px;font-weight:700;color:${C.br}">×${multiplier}</div></div>
+        <div><div style="font-size:11px;color:var(--mu)">수익</div><div style="font-size:14px;font-weight:700;color:${C.ac}">+$${profit}</div></div>
+        <div><div style="font-size:11px;color:var(--mu)">ROI</div><div style="font-size:14px;font-weight:700;color:${C.ac}">+${roi}%</div></div>
+        <div><div style="font-size:11px;color:var(--mu)">KL엣지</div><div style="font-size:14px;font-weight:700;color:${klColor}">${klVerdict}<br><span style="font-size:10px">${kl.toFixed(3)}bit</span></div></div>
+      </div>`;
+  });
+
+  // Summary
+  const summary=document.getElementById('bin-summary');if(!summary)return;
+  if(!results.length){summary.innerHTML='값을 입력하세요';return;}
+
+  const mktOk=totalMktSum<=0.95;
+  const bestResult=results.reduce((a,b)=>parseFloat(a.profit)>parseFloat(b.profit)?a:b,results[0]);
+
+  summary.innerHTML=`
+    <div style="margin-bottom:8px;padding:8px;background:${mktOk?C.gr:C.rd}18;border:1px solid ${mktOk?C.gr:C.rd}44;border-radius:4px">
+      <div style="font-size:13px;font-weight:700;color:${mktOk?C.gr:C.rd};margin-bottom:4px">${mktOk?'✅ 수학적 엣지 확보':'❌ 수학적 엣지 없음'}</div>
+      <div style="font-size:12px;color:var(--mu)">시장가 합계: ${(totalMktSum*100).toFixed(1)}¢ ${mktOk?'≤ 95¢ ✅':'> 95¢ ❌'}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">
+      <div style="text-align:center"><div style="font-size:11px;color:var(--mu)">총 베팅</div><div style="font-size:16px;font-weight:700;color:${C.br}">$${totalBet.toFixed(0)}</div></div>
+      <div style="text-align:center"><div style="font-size:11px;color:var(--mu)">최대 수익</div><div style="font-size:16px;font-weight:700;color:${C.ac}">+$${(bestResult?parseFloat(bestResult.profit):0).toFixed(0)}</div></div>
+      <div style="text-align:center"><div style="font-size:11px;color:var(--mu)">최대 ROI</div><div style="font-size:16px;font-weight:700;color:${C.ac}">+${bestResult?bestResult.roi:0}%</div></div>
+    </div>
+    ${results.map(r=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid var(--bd)55">
+      <span style="color:var(--br);font-weight:700">${r.temp}</span>
+      <span style="color:${r.klColor}">${r.klVerdict} ${r.kl.toFixed(3)}bit</span>
+      <span style="color:${C.ac}">적중시 +$${r.profit} (+${r.roi}%)</span>
+    </div>`).join('')}`;
+}
+
 function calcSniper(){
   const mkt=parseFloat(document.getElementById('sniper-mkt')?.value);
   const model=parseFloat(document.getElementById('sniper-model')?.value)/100;
@@ -1838,12 +1919,12 @@ async function autoFetchWeather(targetDate){
     const now=new Date();
     const resolveKST=new Date(`${targetDate}T23:59:00+09:00`);
     const hoursLeft=(resolveKST-now)/3600000;
-    const inWindow=hoursLeft>=18&&hoursLeft<=30;
-    const wc=inWindow?C.gr:hoursLeft<18?C.rd:C.yw;
+    const inWindow=hoursLeft>=12&&hoursLeft<=30;
+    const wc=inWindow?C.gr:hoursLeft<12?C.rd:C.yw;
     const wm=inWindow
       ?`✅ 진입 윈도우 내 (${hoursLeft.toFixed(1)}h 남음)`
       :hoursLeft<18
-        ?`❌ 너무 늦음 (${hoursLeft.toFixed(1)}h) — 내일 마켓 확인`
+        ?`❌ 너무 늦음 — 오전 일찍 재시도`
         :`⚠ 아직 이름 (${hoursLeft.toFixed(1)}h) — 재확인 필요`;
     const finalTarget=appCorrected!=null?appCorrected:center;
 
@@ -1912,10 +1993,10 @@ function checkEntryWindow(){
   const resolveMs=new Date(rt).getTime();
   const nowMs=Date.now();
   const hoursUntil=(resolveMs-nowMs)/3600000;
-  const inWindow=hoursUntil>=18&&hoursUntil<=30;
-  const color=inWindow?C.gr:hoursUntil<18?C.rd:C.yw;
+  const inWindow=hoursUntil>=12&&hoursUntil<=30;
+  const color=inWindow?C.gr:hoursUntil<12?C.rd:C.yw;
   res.innerHTML=`<div style="padding:7px;background:${color}18;border:1px solid ${color}44;border-radius:4px;font-size:14px;color:${color}">
-    ${inWindow?'✅ 진입 윈도우 내 (18~30h)':hoursUntil<18?`❌ 너무 늦음 — 이미 가격 반영됨 (${hoursUntil.toFixed(1)}h 남음)`:
+    ${inWindow?'✅ 진입 윈도우 내 (12~30h)':hoursUntil<12?`❌ 너무 늦음 — 이미 가격 반영됨 (${hoursUntil.toFixed(1)}h 남음)`:
     `⚠ 아직 이름 (${hoursUntil.toFixed(1)}h 남음 — 30h 이내에 재확인)`}
   </div>`;
 }
@@ -2291,7 +2372,34 @@ function renderWeatherTab(){
     <div id="sniper-result" style="font-size:14px;color:${C.mu};text-align:center;padding:4px">값 입력 시 계산</div>
   </div>
 
-  <!-- ⑥ TOP 7 참조 (접기) -->
+  <!-- ⑥ 구간별 수익률 계산기 -->
+  <div class="sec" style="border-color:${C.ac}33">
+    <div class="stitle" style="color:${C.ac}">⑥ 구간별 수익률 + KL 엣지</div>
+    <div style="font-size:13px;color:${C.mu};margin-bottom:10px">구간별 시장가 · 내 예측 · 베팅액 입력 → 수익/엣지 자동 계산</div>
+    <div id="bin-rows">
+      ${[["17°C","0.010","5","5"],["18°C","0.041","15","15"],["19°C","0.06","10","10"]].map((r,i)=>`
+      <div class="bin-row" style="background:var(--p2);border-radius:5px;padding:8px;margin-bottom:6px">
+        <div style="display:grid;grid-template-columns:60px 1fr 1fr 1fr;gap:6px;align-items:end;margin-bottom:6px">
+          <div><div style="font-size:12px;color:${C.mu};margin-bottom:2px">구간</div>
+            <input class="br-temp" value="${r[0]}" style="text-align:center;font-size:13px;font-weight:700;color:${C.br}"></div>
+          <div><div style="font-size:12px;color:${C.mu};margin-bottom:2px">시장가($)</div>
+            <input type="number" class="br-mkt" value="${r[1]}" step="0.001" min="0.001" oninput="calcBinRows()" style="text-align:center"></div>
+          <div><div style="font-size:12px;color:${C.mu};margin-bottom:2px">모델확률(%)</div>
+            <input type="number" class="br-model" value="${r[2]}" min="0.1" max="99" oninput="calcBinRows()" style="text-align:center"></div>
+          <div><div style="font-size:12px;color:${C.mu};margin-bottom:2px">베팅액($)</div>
+            <input type="number" class="br-bet" value="${r[3]}" min="1" oninput="calcBinRows()" style="text-align:center"></div>
+        </div>
+        <div class="br-result" style="font-size:12px;color:${C.mu}">입력 후 자동 계산</div>
+      </div>`).join('')}
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:8px">
+      <button onclick="addBinRow()" style="flex:1;padding:6px;background:var(--ac)18;border:1px solid var(--ac)44;border-radius:4px;color:var(--ac);font-family:var(--fn);font-size:13px;cursor:pointer">+ 구간 추가</button>
+      <button onclick="calcBinRows()" style="flex:1;padding:6px;background:${C.pu}18;border:1px solid ${C.pu}44;border-radius:4px;color:${C.pu};font-family:var(--fn);font-size:13px;cursor:pointer">📊 전체 계산</button>
+    </div>
+    <div id="bin-summary" style="padding:10px;background:var(--p2);border-radius:5px;font-size:13px;color:${C.mu}">위 값 입력 후 전체 계산 클릭</div>
+  </div>
+
+  <!-- ⑦ TOP 7 참조 (접기) -->
   <details style="margin-bottom:10px">
     <summary style="font-size:13px;letter-spacing:2px;color:${C.mu};cursor:pointer;padding:8px;background:var(--panel);border:1px solid var(--bd);border-radius:5px">🏆 TOP 7 트레이더 전략 참조</summary>
     <div style="margin-top:6px">
