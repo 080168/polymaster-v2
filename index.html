@@ -1797,34 +1797,55 @@ async function autoFetchWeather(targetDate){
   try{
     // Open-Meteo: 각 모델별 hourly temperature 조회
     const baseUrl='https://api.open-meteo.com/v1/forecast';
-    const params=new URLSearchParams({
-      latitude: SEOUL_LAT,
-      longitude: SEOUL_LON,
-      hourly: 'temperature_2m',
-      temperature_unit: 'celsius',
-      timezone: 'Asia/Seoul',
-      start_date: targetDate,
-      end_date: targetDate,
-      forecast_days: 1
-    });
 
-    // 3개 모델 개별 호출 (models 파라미터 방식)
-    async function fetchModel(model){
-      const p=new URLSearchParams(params);
-      p.set('models', model);
-      p.set('bias_correction','true');
-      const r=await fetch(`${baseUrl}?${p}`,{headers:{"Accept":"application/json"}});
-      const d=await r.json();
-      const temps=(d.hourly?.temperature_2m||[]).filter(v=>v!=null);
-      if(!temps.length)throw new Error(`${model} 데이터 없음`);
-      return Math.max(...temps);
+    // 모델별 fallback 포함 개별 호출
+    async function fetchModel(models, label){
+      for(const model of models){
+        try{
+          const p=new URLSearchParams({
+            latitude: SEOUL_LAT, longitude: SEOUL_LON,
+            hourly: 'temperature_2m',
+            temperature_unit: 'celsius',
+            timezone: 'Asia/Seoul',
+            start_date: targetDate, end_date: targetDate,
+            models: model
+          });
+          const r=await fetch(`${baseUrl}?${p}`);
+          if(!r.ok)continue;
+          const d=await r.json();
+          if(d.error)continue;
+          const temps=(d.hourly?.temperature_2m||[]).filter(v=>v!=null&&!isNaN(v));
+          if(temps.length>0)return{val:Math.max(...temps),model};
+        }catch(e){continue;}
+      }
+      throw new Error(`${label} 조회 실패`);
     }
 
-    const [iconMax, gfsMax, ecmwfMax] = await Promise.all([
-      fetchModel('icon_seamless'),
-      fetchModel('gfs_seamless'),
-      fetchModel('ecmwf_ifs025')
+    // 각 모델 fallback 목록
+    const results = await Promise.allSettled([
+      fetchModel(['icon_seamless','icon_global'],'ICON'),
+      fetchModel(['gfs_seamless','gfs_global'],'GFS'),
+      fetchModel(['ecmwf_ifs025','ecmwf_ifs_analysis'],'ECMWF')
     ]);
+
+    // 성공한 모델만 사용
+    const vals = results.map((r,i)=>{
+      if(r.status==='fulfilled') return r.value.val;
+      return null;
+    });
+
+    const labels=['ICON','GFS','ECMWF'];
+    const modelNames = results.map((r,i)=>
+      r.status==='fulfilled'?r.value.model:labels[i]+'(실패)'
+    );
+
+    const validVals = vals.filter(v=>v!==null);
+    if(!validVals.length) throw new Error('모든 모델 조회 실패 — 네트워크 확인');
+
+    const iconMax  = vals[0] ?? validVals[0];
+    const gfsMax   = vals[1] ?? validVals[0];
+    const ecmwfMax = vals[2] ?? validVals[0];
+
     const spread=Math.max(iconMax,gfsMax,ecmwfMax)-Math.min(iconMax,gfsMax,ecmwfMax);
     const center=((iconMax+gfsMax+ecmwfMax)/3);
 
@@ -1849,9 +1870,9 @@ async function autoFetchWeather(targetDate){
     <div style="background:var(--p2);border-radius:6px;padding:10px;margin-bottom:8px">
       <div style="font-size:9px;color:${C.mu};letter-spacing:2px;margin-bottom:8px">🌡 ${targetDate} SEOUL (인천공항 RKSI)</div>
       <div class="g3" style="margin-bottom:8px">
-        ${kv("ICON",iconMax.toFixed(1)+"°C",C.ac)}
-        ${kv("GFS",gfsMax.toFixed(1)+"°C",C.yw)}
-        ${kv("ECMWF",ecmwfMax.toFixed(1)+"°C",C.pu)}
+        ${kv("ICON",iconMax.toFixed(1)+"°C"+(vals[0]===null?' ⚠':''),vals[0]!==null?C.ac:C.rd)}
+        ${kv("GFS",gfsMax.toFixed(1)+"°C"+(vals[1]===null?' ⚠':''),vals[1]!==null?C.yw:C.rd)}
+        ${kv("ECMWF",ecmwfMax.toFixed(1)+"°C"+(vals[2]===null?' ⚠':''),vals[2]!==null?C.pu:C.rd)}
       </div>
       <div class="g2">
         ${kv("중심값",center.toFixed(1)+"°C",C.br)}
