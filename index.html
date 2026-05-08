@@ -1823,14 +1823,15 @@ async function autoFetchWeather(targetDate){
     const spread=Math.max(...v)-Math.min(...v);
     const center=(v[0]+v[1]+v[2])/3;
 
-    // 날씨앱 편향 보정 (Seoul: 날씨앱이 실제보다 2~3°C 높게 나오는 경향)
+    // Open-Meteo 모델 중심값 (보정 없음 - 이미 bias_correction=true 적용됨)
+    // 날씨앱 별도 입력 → 별도 보정 적용
+    const weatherAppInput=parseFloat(document.getElementById('w-weather-app')?.value)||0;
     const appBias=parseFloat(document.getElementById('w-app-bias')?.value)||(-2);
-    const corrected=center+appBias;
+    const appCorrected=weatherAppInput>0?(weatherAppInput+appBias):null;
 
     wState.iconMean=v[0].toFixed(1);
     wState.gfsMean=v[1].toFixed(1);
     wState.ecmwfMean=v[2].toFixed(1);
-    wState.city='Seoul'; wState.cityBias=appBias;
 
     const agree=spread<=5;
     const sc=agree?C.gr:C.rd;
@@ -1844,42 +1845,41 @@ async function autoFetchWeather(targetDate){
       :hoursLeft<18
         ?`❌ 너무 늦음 (${hoursLeft.toFixed(1)}h) — 내일 마켓 확인`
         :`⚠ 아직 이름 (${hoursLeft.toFixed(1)}h) — 재확인 필요`;
+    const finalTarget=appCorrected!=null?appCorrected:center;
 
     res.innerHTML=`<div class="fade">
     <div style="background:var(--p2);border-radius:6px;padding:10px;margin-bottom:8px">
       <div style="font-size:13px;color:${C.mu};letter-spacing:2px;margin-bottom:8px">🌡 ${targetDate} SEOUL (인천공항 RKSI)</div>
-      <div class="g3" style="margin-bottom:8px">
+      <div class="g3" style="margin-bottom:6px">
         ${kv("ICON",v[0].toFixed(1)+"°C",C.ac)}
         ${kv("GFS",v[1].toFixed(1)+"°C",C.yw)}
         ${kv("ECMWF",v[2].toFixed(1)+"°C",C.pu)}
       </div>
-      <div class="g3">
-        ${kv("모델 중심",center.toFixed(1)+"°C",C.br)}
-        ${kv("Spread",spread.toFixed(1)+"°C",sc)}
-        ${kv("보정후",corrected.toFixed(1)+"°C",C.ac)}
-      </div>
+      <div class="g2">${kv("모델 중심",center.toFixed(1)+"°C",C.br)}${kv("Spread",spread.toFixed(1)+"°C",sc)}</div>
     </div>
-    <div style="padding:8px;background:${C.ac}18;border:1px solid ${C.ac}44;border-radius:4px;margin-bottom:6px;font-size:12px;color:${C.ac}">
-      📐 날씨앱 편향 보정: ${center.toFixed(1)} ${appBias>=0?'+':''}${appBias}°C = <b>${corrected.toFixed(1)}°C</b> (실제 예상 최고기온)
-    </div>
+    ${appCorrected!=null?`
+    <div style="padding:10px;background:${C.ac}18;border:2px solid ${C.ac};border-radius:6px;margin-bottom:8px;text-align:center">
+      <div style="font-size:12px;color:${C.mu};margin-bottom:4px">📱 날씨앱 보정 (${weatherAppInput}°C → ${appBias}°C 적용)</div>
+      <div style="font-size:26px;font-weight:700;color:${C.ac}">${appCorrected.toFixed(1)}°C</div>
+      <div style="font-size:12px;color:${C.mu}">← 폴리마켓 베팅 기준</div>
+    </div>`:`<div style="padding:8px;background:${C.yw}18;border:1px solid ${C.yw}44;border-radius:4px;margin-bottom:8px;font-size:12px;color:${C.yw}">
+      📱 날씨앱 예보를 아래 입력칸에 입력하면 정확한 타겟 계산</div>`}
     <div style="padding:8px;background:${sc}18;border:1px solid ${sc}44;border-radius:4px;margin-bottom:6px">
       <div style="font-size:14px;color:${sc};font-weight:700">${agree?`✅ 3-모델 합의 (spread ${spread.toFixed(1)}°C)`:`❌ SKIP — 모델 분산 ${spread.toFixed(1)}°C > 5°C`}</div>
     </div>
     <div style="padding:8px;background:${wc}18;border:1px solid ${wc}44;border-radius:4px;margin-bottom:8px">
       <div style="font-size:14px;color:${wc};font-weight:700">${wm}</div>
     </div>
-    ${agree&&inWindow?`<div style="padding:8px;background:${C.pu}18;border:1px solid ${C.pu}44;border-radius:4px;margin-bottom:8px;font-size:14px;color:${C.pu}">
-      🎯 진입 조건 충족 — 폴리마켓에서 <b>${corrected.toFixed(0)}°C</b> 전후 구간 가격 확인
+    ${agree&&inWindow?`<div style="padding:10px;background:${C.pu}18;border:2px solid ${C.pu}44;border-radius:6px;margin-bottom:8px;text-align:center">
+      <div style="font-size:12px;color:${C.mu};margin-bottom:4px">🎯 진입 타겟 구간</div>
+      <div style="font-size:24px;font-weight:700;color:${C.pu}">${Math.round(finalTarget-1)}~${Math.round(finalTarget+1)}°C</div>
     </div>`:''}
-    <button onclick="autoFetchWeather('${targetDate}')" style="width:100%;padding:7px;background:var(--ac)18;border:1px solid var(--ac)44;border-radius:4px;color:var(--ac);font-family:var(--fn);font-size:13px;cursor:pointer;letter-spacing:1px">🔄 재조회</button>
+    <button onclick="autoFetchWeather('${targetDate}')" style="width:100%;padding:7px;background:var(--ac)18;border:1px solid var(--ac)44;border-radius:4px;color:var(--ac);font-family:var(--fn);font-size:13px;cursor:pointer">🔄 재조회</button>
     </div>`;
 
-    ['w-icon-m','w-gfs-m','w-ecmwf-m'].forEach((id,i)=>{
-      const el=document.getElementById(id);
-      if(el)el.value=v[i].toFixed(1);
-    });
+    ['w-icon-m','w-gfs-m','w-ecmwf-m'].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.value=v[i].toFixed(1);});
     calc3ModelConsensus();
-    toast(`조회 완료 — 보정후 ${corrected.toFixed(1)}°C`,C.gr);
+    toast(`조회 완료 — ${appCorrected!=null?'앱보정 '+appCorrected.toFixed(1):'모델 '+center.toFixed(1)}°C`,C.gr);
 
   }catch(e){
     res.innerHTML=`<div style="padding:10px;background:${C.rd}18;border:1px solid ${C.rd}44;border-radius:4px">
@@ -2192,12 +2192,23 @@ function renderWeatherTab(){
       📍 Seoul 인천공항(RKSI) · bias_correction=true<br>
       ICON · GFS · ECMWF 3모델 동시 조회 → 자동 계산
     </div>
-    <div style="margin-bottom:10px;padding:8px;background:var(--p2);border-radius:5px;border:1px solid var(--bd)">
-      <div style="font-size:12px;color:${C.mu};margin-bottom:5px">📐 날씨앱 편향 보정 (Seoul 기본값: -2°C)</div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <input type="number" id="w-app-bias" value="-2" step="0.5" min="-5" max="5"
-          style="width:80px;text-align:center;font-size:14px;font-weight:700;color:${C.ac}">
-        <div style="font-size:12px;color:${C.mu};flex:1">날씨앱 예보 대비 실제 정산값 차이<br>어제 분석: 날씨앱 20°C → 실제 20°C → 보정 0°C<br>보통 -2~-3°C 적용 권장</div>
+    <div style="margin-bottom:10px;padding:10px;background:var(--p2);border-radius:5px;border:1px solid var(--bd)">
+      <div style="font-size:12px;color:${C.mu};margin-bottom:8px;font-weight:700">📱 날씨앱 입력 + 보정</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px">
+        <div>
+          <div style="font-size:11px;color:${C.mu};margin-bottom:3px">날씨앱 최고기온(°C)</div>
+          <input type="number" id="w-weather-app" placeholder="예: 20" step="1" min="0" max="40"
+            style="text-align:center;font-size:16px;font-weight:700;color:${C.br}">
+        </div>
+        <div>
+          <div style="font-size:11px;color:${C.mu};margin-bottom:3px">보정값(°C, 기본-2)</div>
+          <input type="number" id="w-app-bias" value="-2" step="0.5" min="-5" max="5"
+            style="text-align:center;font-size:16px;font-weight:700;color:${C.ac}">
+        </div>
+      </div>
+      <div style="font-size:11px;color:${C.mu};line-height:1.5">
+        날씨앱 20°C + 보정 -2°C = <b style="color:${C.ac}">18°C</b> (베팅 타겟)<br>
+        모델값과 날씨앱값은 <b>별도로 계산</b>됩니다
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
